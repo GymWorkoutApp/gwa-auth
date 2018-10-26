@@ -1,0 +1,9 @@
+package: github.com/GymWorkoutApp/gwa_auth.server
+import:
+- package: gopkg.in/oauth2.v3
+  version: ^3.9.0
+  vcs: git
+
+- package: gopkg.in/go-oauth2/redis.v3
+  version: ^3.0.2
+  vcs: git
