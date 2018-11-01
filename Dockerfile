@@ -2,7 +2,7 @@ FROM golang:alpine
 
 WORKDIR /go/src/github.com/GymWorkoutApp/gwa_common.server
 
-RUN apt install --update --no-cache \
+RUN apk add --update --no-cache \
     make \
     build-base \
     jq \
@@ -22,7 +22,7 @@ RUN cp /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime && \
 
 EXPOSE 8080
 
-RUN apt update && \
-    apt install golang-glide && \
+RUN apk update && \
+    apk add glide && \
     glide install && \
     go build

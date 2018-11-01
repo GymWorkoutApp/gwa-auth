@@ -5,7 +5,7 @@ volumes:
 
 services:
   gwa_auth:
-    image: redis:alpine
+    image: golang:alpine
     container_name: gwa_auth
     build: .
     expose:

@@ -1,19 +1,26 @@
 package main
 
 import (
+	"fmt"
+	"github.com/GymWorkoutApp/gwa_auth.server/cache"
+	"github.com/dgrijalva/jwt-go"
 	"log"
 	"net/http"
+	"os"
 
-	"gopkg.in/go-oauth2/redis.v3"
-	"gopkg.in/oauth2.v3/errors"
-	"gopkg.in/oauth2.v3/manage"
-	"gopkg.in/oauth2.v3/models"
-	"gopkg.in/oauth2.v3/server"
-	"gopkg.in/oauth2.v3/store"
+	"github.com/GymWorkoutApp/gwa_auth.server/errors"
+	"github.com/GymWorkoutApp/gwa_auth.server/generates"
+	"github.com/GymWorkoutApp/gwa_auth.server/manager"
+	"github.com/GymWorkoutApp/gwa_auth.server/models"
+	"github.com/GymWorkoutApp/gwa_auth.server/server"
+	"github.com/GymWorkoutApp/gwa_auth.server/store"
 )
 
 func main() {
-	manager := manage.NewDefaultManager()
+
+	manager := manager.NewDefaultManager()
+	manager.MapAccessGenerate(generates.NewJWTAccessGenerate([]byte("00000000"), jwt.SigningMethodHS512))
+
 	// token memory store
 	manager.MapTokenStorage(redis.NewRedisStore(&redis.Options{
 		Addr: "127.0.0.1:6379",
@@ -35,6 +42,7 @@ func main() {
 
 	srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {
 		log.Println("Internal Error:", err.Error())
+		re = &errors.Response{Error: err, StatusCode: 500, Description: err.Error()}
 		return
 	})
 
@@ -53,6 +61,11 @@ func main() {
 		srv.HandleTokenRequest(w, r)
 	})
 
-	log.Println("Run on :9096")
-	log.Fatal(http.ListenAndServe(":9096", nil))
+	http.HandleFunc("/introspect", func (w http.ResponseWriter, r *http.Request) {
+		srv.HandleIntrospectRequest(w, r)
+	})
+
+	port := os.Getenv("PORT")
+	log.Println(fmt.Sprintf("Running on :%v", port))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v",port), nil))
 }
