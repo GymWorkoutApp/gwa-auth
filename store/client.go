@@ -2,7 +2,8 @@ package store
 
 import (
 	"errors"
-	"github.com/GymWorkoutApp/gwa_auth.server/models"
+	"github.com/GymWorkoutApp/gwa_auth/database"
+	"github.com/GymWorkoutApp/gwa_auth/models"
 	"sync"
 )
 
@@ -32,9 +33,37 @@ func (cs *ClientStoreMemory) GetByID(id string) (cli models.ClientInfo, err erro
 }
 
 // Set set client information
-func (cs *ClientStoreMemory) Set(id string, cli models.ClientInfo) (err error) {
+func (cs *ClientStoreMemory) Set(cli models.ClientInfo) (err error) {
 	cs.Lock()
 	defer cs.Unlock()
-	cs.data[id] = cli
+	cs.data[cli.GetID()] = cli
 	return
+}
+
+
+
+// NewClientStore create client store
+func NewClientStoreDB() ClientStore {
+	return &ClientStoreDB{}
+}
+
+// ClientStore client information store
+type ClientStoreDB struct {
+
+}
+
+// GetByID according to the ID for the client information
+func (cs *ClientStoreDB) GetByID(id string) (models.ClientInfo, error) {
+	db := database.NewManageDB().Get()
+	defer db.Close()
+	client := models.Client{}
+	db.Where("id = ?", id).First(&client)
+	return client, nil
+}
+
+// Set set client information
+func (cs *ClientStoreDB) Set(client models.ClientInfo) (err error) {
+	db := database.NewManageDB().Get()
+	defer db.Close()
+	return db.Save(client).Error
 }

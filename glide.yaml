@@ -1,5 +1,6 @@
-package: github.com/GymWorkoutApp/gwa_auth.server
+package: github.com/GymWorkoutApp/gwa_auth
 import:
 - package: github.com/jinzhu/gorm
   vcs: git
+
 

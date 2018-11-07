@@ -2,9 +2,9 @@ package redis
 
 import (
 	"fmt"
-	"github.com/GymWorkoutApp/gwa_auth.server/models"
-	"github.com/GymWorkoutApp/gwa_auth.server/store"
-	"github.com/GymWorkoutApp/gwa_auth.server/utils/uuid"
+	"github.com/GymWorkoutApp/gwa_auth/models"
+	"github.com/GymWorkoutApp/gwa_auth/store"
+	"github.com/GymWorkoutApp/gwa_auth/utils/uuid"
 	"time"
 
 	"github.com/go-redis/redis"

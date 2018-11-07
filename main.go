@@ -2,41 +2,46 @@ package main
 
 import (
 	"fmt"
-	"github.com/GymWorkoutApp/gwa_auth.server/cache"
+	"github.com/GymWorkoutApp/gwa_auth/cache"
+	"github.com/GymWorkoutApp/gwa_auth/database"
+	"github.com/GymWorkoutApp/gwa_auth/models"
+	"github.com/GymWorkoutApp/gwa_auth/store"
 	"github.com/dgrijalva/jwt-go"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/GymWorkoutApp/gwa_auth.server/errors"
-	"github.com/GymWorkoutApp/gwa_auth.server/generates"
-	"github.com/GymWorkoutApp/gwa_auth.server/manager"
-	"github.com/GymWorkoutApp/gwa_auth.server/models"
-	"github.com/GymWorkoutApp/gwa_auth.server/server"
-	"github.com/GymWorkoutApp/gwa_auth.server/store"
+	"github.com/GymWorkoutApp/gwa_auth/errors"
+	"github.com/GymWorkoutApp/gwa_auth/generates"
+	"github.com/GymWorkoutApp/gwa_auth/manager"
+	"github.com/GymWorkoutApp/gwa_auth/server"
 )
 
 func main() {
 
-	manager := manager.NewDefaultManager()
-	manager.MapAccessGenerate(generates.NewJWTAccessGenerate([]byte("00000000"), jwt.SigningMethodHS512))
+	managerServer := manager.NewDefaultManager()
+	managerServer.MapAccessGenerate(generates.NewJWTAccessGenerate([]byte("00000000"), jwt.SigningMethodHS512))
 
 	// token memory store
-	manager.MapTokenStorage(redis.NewRedisStore(&redis.Options{
+	managerServer.MapTokenStorage(redis.NewRedisStore(&redis.Options{
 		Addr: "127.0.0.1:6379",
 		DB: 15,
 	}))
 
+	srv := server.NewDefaultServer(managerServer)
+
+	db := database.NewManageDB().Get()
+	defer db.Close()
+	db.AutoMigrate(&models.Client{})
+
 	// client memory store
-	clientStore := store.NewClientStore()
-	clientStore.Set("000000", &models.Client{
-		ID:     "000000",
+	clientStore := store.NewClientStoreDB()
+	clientStore.Set(&models.Client{
 		Secret: "999999",
 		Domain: "http://localhost",
 	})
-	manager.MapClientStorage(clientStore)
+	managerServer.MapClientStorage(clientStore)
 
-	srv := server.NewDefaultServer(manager)
 	srv.SetAllowGetAccessRequest(true)
 	srv.SetClientInfoHandler(server.ClientFormHandler)
 

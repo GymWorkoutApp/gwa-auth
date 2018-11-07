@@ -8,6 +8,7 @@ type (
 	// ClientInfo the client information model interface
 	ClientInfo interface {
 		GetID() string
+		SetID(string)
 		GetSecret() string
 		GetDomain() string
 		GetUserID() string

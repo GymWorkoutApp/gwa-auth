@@ -1,9 +1,9 @@
 package server
 
 import (
-	"github.com/GymWorkoutApp/gwa_auth.server/constants"
-	"github.com/GymWorkoutApp/gwa_auth.server/errors"
-	"github.com/GymWorkoutApp/gwa_auth.server/models"
+	"github.com/GymWorkoutApp/gwa_auth/constants"
+	"github.com/GymWorkoutApp/gwa_auth/errors"
+	"github.com/GymWorkoutApp/gwa_auth/models"
 	"net/http"
 	"time"
 )

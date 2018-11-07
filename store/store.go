@@ -1,13 +1,13 @@
 package store
 
-import "github.com/GymWorkoutApp/gwa_auth.server/models"
+import "github.com/GymWorkoutApp/gwa_auth/models"
 
 type (
 	// ClientStore the client information storage interface
 	ClientStore interface {
 		// according to the ID for the client information
 		GetByID(id string) (models.ClientInfo, error)
-		Set(id string, cli models.ClientInfo) (err error)
+		Set(cli models.ClientInfo) (err error)
 	}
 
 	// TokenStore the token information storage interface

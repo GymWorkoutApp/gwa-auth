@@ -2,8 +2,8 @@ package generates
 
 import (
 	"encoding/base64"
-	"github.com/GymWorkoutApp/gwa_auth.server/errors"
-	"github.com/GymWorkoutApp/gwa_auth.server/utils/uuid"
+	"github.com/GymWorkoutApp/gwa_auth/errors"
+	"github.com/GymWorkoutApp/gwa_auth/utils/uuid"
 	"strings"
 	"time"
 

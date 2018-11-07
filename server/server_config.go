@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/GymWorkoutApp/gwa_auth.server/constants"
+	"github.com/GymWorkoutApp/gwa_auth/constants"
 )
 
 // SetTokenType token type
@@ -63,6 +63,7 @@ func (s *Server) SetResponseErrorHandler(handler ResponseErrorHandler) {
 func (s *Server) SetInternalErrorHandler(handler InternalErrorHandler) {
 	s.InternalErrorHandler = handler
 }
+
 
 // SetExtensionFieldsHandler in response to the access token with the extension of the field
 func (s *Server) SetExtensionFieldsHandler(handler ExtensionFieldsHandler) {

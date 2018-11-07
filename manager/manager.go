@@ -1,11 +1,11 @@
 package manager
 
 import (
-	"github.com/GymWorkoutApp/gwa_auth.server/constants"
-	"github.com/GymWorkoutApp/gwa_auth.server/errors"
-	"github.com/GymWorkoutApp/gwa_auth.server/generates"
-	"github.com/GymWorkoutApp/gwa_auth.server/models"
-	"github.com/GymWorkoutApp/gwa_auth.server/store"
+	"github.com/GymWorkoutApp/gwa_auth/constants"
+	"github.com/GymWorkoutApp/gwa_auth/errors"
+	"github.com/GymWorkoutApp/gwa_auth/generates"
+	"github.com/GymWorkoutApp/gwa_auth/models"
+	"github.com/GymWorkoutApp/gwa_auth/store"
 	"time"
 )
 
