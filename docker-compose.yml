@@ -1,0 +1,41 @@
+version: '3'
+
+volumes:
+  pgdata:
+
+services:
+  gwa_auth:
+    image: golang:alpine
+    container_name: gwa_auth
+    build: .
+    expose:
+    - 8080
+    ports:
+    - 8080:8080
+    depends_on:
+    - redis_gwa_auth
+    - postgres_gwa_auth
+    links:
+    - redis_gwa_auth
+    env_file:
+    - environments/hml.env
+
+  redis_gwa_auth:
+    image: redis:alpine
+    container_name: redis_gwa_auth
+    ports:
+    - 6379:6379
+
+  postgres_gwa_auth:
+    container_name: postgres_gwa_auth
+    image: postgres:alpine
+    expose:
+    - 5432
+    ports:
+    - 5432:5432
+    volumes:
+    - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: gwa_auth_db
+      POSTGRES_USER: gwa_auth
+      POSTGRES_PASSWORD: D1685E7932B7B71F138CECE1C0300414
