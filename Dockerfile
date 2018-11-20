@@ -1,6 +1,6 @@
 FROM golang:alpine
 
-WORKDIR /go/src/github.com/GymWorkoutApp/gwa_common.server
+WORKDIR /go/src/github.com/GymWorkoutApp/gwa_auth
 
 RUN apk add --update --no-cache \
     make \
@@ -15,7 +15,7 @@ RUN apk add --update --no-cache \
     ca-certificates && \
     update-ca-certificates
 
-ADD . /go/src/github.com/GymWorkoutApp/gwa_common.server
+ADD . /go/src/github.com/GymWorkoutApp/gwa_auth
 
 RUN cp /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime && \
     echo "America/Sao_Paulo" > /etc/timezone
