@@ -21,7 +21,7 @@ services:
     - environments/hml.env
 
   redis_gwa_auth:
-    image: redis:alpine
+    image: cache:alpine
     container_name: redis_gwa_auth
     ports:
     - 6379:6379

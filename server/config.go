@@ -9,7 +9,6 @@ import (
 // Config configuration parameters
 type Config struct {
 	TokenType             string                // token type
-	AllowGetAccessRequest bool                  // to allow GET requests for the token
 	AllowedResponseTypes  []constants.ResponseType // allow the authorization type
 	AllowedGrantTypes     []constants.GrantType    // allow the grant type
 }

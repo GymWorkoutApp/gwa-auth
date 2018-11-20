@@ -23,7 +23,25 @@ type TokenGenerateRequest struct {
 // Manager authorization management interface
 type Manager interface {
 	// get the client information
-	GetClient(clientID string) (cli models.ClientInfo, err error)
+	GetClientById(clientID string) (cli models.ClientInfo, err error)
+
+	// get the client information
+	GetClient(cli models.ClientInfo) ([]models.ClientInfo, error)
+
+	// create the client information
+	CreateClient(cli models.ClientInfo) (models.ClientInfo, error)
+
+	// update the client information
+	UpdateClient(cli models.ClientInfo) (models.ClientInfo, error)
+
+	// get the client information
+	GetUser(userID string) (cli models.UserInfo, err error)
+
+	// create the client information
+	CreateUser(user models.UserInfo) (models.UserInfo, error)
+
+	// update the client information
+	UpdateUser(user models.UserInfo) (models.UserInfo, error)
 
 	// generate the authorization token(code)
 	GenerateAuthToken(rt constants.ResponseType, tgr *TokenGenerateRequest) (authToken models.TokenInfo, err error)

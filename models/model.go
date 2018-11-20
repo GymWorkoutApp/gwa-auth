@@ -14,10 +14,19 @@ type (
 		GetUserID() string
 	}
 
+	// ClientInfo the client information model interface
+	UserInfo interface {
+		GetID() string
+		SetID(string)
+		GetPassword() string
+		SetPassword(string)
+		GetName() string
+		SetName(string)
+	}
+
 	// TokenInfo the token information model interface
 	TokenInfo interface {
 		New() TokenInfo
-
 		GetClientID() string
 		SetClientID(string)
 		GetUserID() string

@@ -7,7 +7,19 @@ type (
 	ClientStore interface {
 		// according to the ID for the client information
 		GetByID(id string) (models.ClientInfo, error)
-		Set(cli models.ClientInfo) (err error)
+		Get(cli models.ClientInfo) ([]models.ClientInfo, error)
+		Create(cli models.ClientInfo) (models.ClientInfo, error)
+		Update(cli models.ClientInfo) (models.ClientInfo, error)
+		RemoveByID(id string) (error)
+	}
+
+	// ClientStore the client information storage interface
+	UserStore interface {
+		// according to the ID for the client information
+		GetByID(id string) (models.UserInfo, error)
+		Create(cli models.UserInfo) (models.UserInfo, error)
+		Update(cli models.UserInfo) (models.UserInfo, error)
+		RemoveByID(id string) (error)
 	}
 
 	// TokenStore the token information storage interface

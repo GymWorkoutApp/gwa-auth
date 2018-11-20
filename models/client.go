@@ -3,20 +3,16 @@ package models
 import (
 	"github.com/GymWorkoutApp/gwa_auth/utils/uuid"
 	"github.com/jinzhu/gorm"
-	"time"
 )
 
 // Client client model
 type Client struct {
-	//gorm.Model
+	Base
 
 	ID     		string `json:"id" gorm:"not null;primary_key;"`
-	Secret 		string
-	Domain 		string
-	UserID 		string
-	CreatedAt 	time.Time
-	UpdatedAt 	time.Time
-	DeletedAt 	*time.Time `sql:"index"`
+	Secret 		string `json:"secret" gorm:"not null;"`
+	Domain 		string `json:"domain"`
+	UserID 		string `json:"user_id" gorm:"not null;"`
 }
 
 // GetID client id

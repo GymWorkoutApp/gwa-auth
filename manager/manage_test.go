@@ -32,7 +32,7 @@ func TestManager(t *testing.T) {
 			Scope:       "all",
 		}
 
-		Convey("GetClient test", func() {
+		Convey("GetClientById test", func() {
 			cli, err := manager.GetClient("1")
 			So(err, ShouldBeNil)
 			So(cli.GetSecret(), ShouldEqual, "11")

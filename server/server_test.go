@@ -2,18 +2,16 @@ package server
 
 import (
 	"fmt"
+	"github.com/GymWorkoutApp/gwa_auth/errors"
+	"github.com/GymWorkoutApp/gwa_auth/models"
+	"github.com/GymWorkoutApp/gwa_auth/store"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
 	"github.com/gavv/httpexpect"
-	"gopkg.in/oauth2.v3"
-	"gopkg.in/oauth2.v3/errors"
-	"gopkg.in/oauth2.v3/manage"
-	"gopkg.in/oauth2.v3/models"
-	"gopkg.in/oauth2.v3/server"
-	"gopkg.in/oauth2.v3/store"
+
 )
 
 var (
@@ -33,7 +31,6 @@ func init() {
 func clientStore(domain string) oauth2.ClientStore {
 	clientStore := store.NewClientStore()
 	clientStore.Set(clientID, &models.Client{
-		ID:     clientID,
 		Secret: clientSecret,
 		Domain: domain,
 	})
@@ -186,7 +183,6 @@ func TestClientCredentials(t *testing.T) {
 	})
 
 	srv.SetAllowedGrantType(oauth2.ClientCredentials)
-	srv.SetAllowGetAccessRequest(false)
 	srv.SetExtensionFieldsHandler(func(ti oauth2.TokenInfo) (fieldsValue map[string]interface{}) {
 		fieldsValue = map[string]interface{}{
 			"extension": "param",

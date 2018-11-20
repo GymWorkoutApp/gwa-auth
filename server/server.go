@@ -7,6 +7,7 @@ import (
 	"github.com/GymWorkoutApp/gwa_auth/errors"
 	"github.com/GymWorkoutApp/gwa_auth/manager"
 	"github.com/GymWorkoutApp/gwa_auth/models"
+	"github.com/labstack/echo"
 	"net/http"
 	"net/url"
 	"strings"
@@ -145,21 +146,19 @@ func (s *Server) CheckResponseType(rt constants.ResponseType) bool {
 }
 
 // ValidationAuthorizeRequest the authorization request validation
-func (s *Server) ValidationAuthorizeRequest(r *http.Request) (req *AuthorizeRequest, err error) {
-	redirectURI, err := url.QueryUnescape(r.FormValue("redirect_uri"))
+func (s *Server) ValidationAuthorizeRequest(c echo.Context) (req *AuthorizeRequest, err error) {
+	redirectURI, err := url.QueryUnescape(c.QueryParam("redirect_uri"))
 	if err != nil {
 		return
 	}
 
-	clientID := r.FormValue("client_id")
-	if r.Method != "GET" ||
-		clientID == "" ||
-		redirectURI == "" {
+	clientID := c.QueryParam("client_id")
+	if clientID == "" || redirectURI == "" {
 		err = errors.ErrInvalidRequest
 		return
 	}
 
-	resType := constants.ResponseType(r.FormValue("response_type"))
+	resType := constants.ResponseType(c.QueryParam("response_type"))
 
 	if resType.String() == "" {
 		err = errors.ErrUnsupportedResponseType
@@ -173,9 +172,9 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (req *AuthorizeRequ
 		RedirectURI:  redirectURI,
 		ResponseType: resType,
 		ClientID:     clientID,
-		State:        r.FormValue("state"),
-		Scope:        r.FormValue("scope"),
-		Request:      r,
+		State:        c.QueryParam("state"),
+		Scope:        c.QueryParam("scope"),
+		Request:      c.Request(),
 	}
 	return
 }
@@ -239,18 +238,19 @@ func (s *Server) GetAuthorizeData(rt constants.ResponseType, ti models.TokenInfo
 }
 
 // HandleAuthorizeRequest the authorization request handling
-func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) (err error) {
-	req, verr := s.ValidationAuthorizeRequest(r)
+func (s *Server) HandleAuthorizeRequest(c echo.Context) (err error) {
+	req, verr := s.ValidationAuthorizeRequest(c)
+	r := c.Response()
 	if verr != nil {
-		err = s.redirectError(w, req, verr)
+		err = s.redirectError(r, req, verr)
 		return
 	}
 
 	// user authorization
-	userID, verr := s.UserAuthorizationHandler(w, r)
+	userID, verr := s.UserAuthorizationHandler(r, c.Request())
 
 	if verr != nil {
-		err = s.redirectError(w, req, verr)
+		err = s.redirectError(r, req, verr)
 		return
 	} else if userID == "" {
 		return
@@ -261,7 +261,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	// specify the scope of authorization
 	if fn := s.AuthorizeScopeHandler; fn != nil {
 
-		scope, verr := fn(w, r)
+		scope, verr := fn(r, c.Request())
 		if verr != nil {
 			err = verr
 			return
@@ -273,7 +273,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	// specify the expiration time of access token
 	if fn := s.AccessTokenExpHandler; fn != nil {
 
-		exp, verr := fn(w, r)
+		exp, verr := fn(r, c.Request())
 		if verr != nil {
 			err = verr
 			return
@@ -283,18 +283,17 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 
 	ti, verr := s.GetAuthorizeToken(req)
 	if verr != nil {
-		err = s.redirectError(w, req, verr)
+		err = s.redirectError(r, req, verr)
 		return
 	}
 
-	err = s.redirect(w, req, s.GetAuthorizeData(req.ResponseType, ti))
+	err = s.redirect(r, req, s.GetAuthorizeData(req.ResponseType, ti))
 	return
 }
 
 // ValidationTokenRequest the token request validation
 func (s *Server) ValidationTokenRequest(r *http.Request) (gt constants.GrantType, tgr *manager.TokenGenerateRequest, err error) {
-	if v := r.Method; !(v == "POST" ||
-		(s.Config.AllowGetAccessRequest && v == "GET")) {
+	if v := r.Method; v != "POST" {
 		err = errors.ErrInvalidRequest
 		return
 	}
@@ -483,30 +482,137 @@ func (s *Server) GetTokenData(ti models.TokenInfo) (data map[string]interface{})
 }
 
 // HandleTokenRequest token request handling
-func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err error) {
+func (s *Server) HandleTokenRequest(c echo.Context) (error) {
+	r := c.Request()
+	w := c.Response()
 	gt, tgr, verr := s.ValidationTokenRequest(r)
 	if verr != nil {
-		err = s.tokenError(w, verr)
-		return
+		return s.tokenError(c.Response(), verr)
 	}
 
 	ti, verr := s.GetAccessToken(gt, tgr)
 	if verr != nil {
-		err = s.tokenError(w, verr)
-		return
+		return s.tokenError(w, verr)
 	}
 
-	err = s.token(w, s.GetTokenData(ti), nil)
-	return
+	return s.token(w, s.GetTokenData(ti), nil)
 }
 
 // HandleIntrospectRequest introspect request handling
-func (s *Server) HandleIntrospectRequest(w http.ResponseWriter, r *http.Request) (err error) {
-	if v := r.Method; !(v == "POST" || v == "GET") {
+func (s *Server) HandleIntrospectRequest(e echo.Context) (err error) {
+	w := e.Response()
+	token := string(e.QueryParam("token"))
+
+	if token != "" {
+		info, err := s.Manager.LoadAccessToken(token)
+
+		if err != nil {
+			err = s.tokenError(w, err)
+			return err
+		}
+
+		err = s.token(w, s.GetTokenData(info), nil)
+		return err
+	} else {
+		http.Error(w, "Token is required", http.StatusBadRequest)
 		return
 	}
+}
 
-	token := string(r.FormValue("token"))
+// HandleClientCreateRequest introspect request handling
+func (s *Server) HandleClientCreateRequest(e echo.Context) (error) {
+	client := new(models.Client)
+	if err := e.Bind(client); err != nil {
+		return err
+	}
+	clientSave, err := s.Manager.CreateClient(client)
+	if err != nil {
+		return err
+	}
+	return e.JSON(http.StatusCreated, clientSave)
+}
+
+// HandleClientUpdateRequest introspect request handling
+func (s *Server) HandleClientUpdateRequest(e echo.Context) (err error) {
+	client := new(models.Client)
+	if err := e.Bind(client); err != nil {
+		return err
+	}
+	clientSave, err := s.Manager.UpdateClient(client)
+	if err != nil {
+		return err
+	}
+	return e.JSON(http.StatusOK, clientSave)
+}
+
+// HandleClientGetRequest introspect request handling
+func (s *Server) HandleClientGetRequest(e echo.Context) (err error) {
+	client := new(models.Client)
+	if err := e.Bind(client); err != nil {
+		return err
+	}
+	id := e.Param("id")
+	if id != "" {
+		clientSave, err := s.Manager.GetClientById(id)
+		if err != nil {
+			return err
+		}
+		return e.JSON(http.StatusOK, clientSave)
+	} else {
+		clientSave, err := s.Manager.GetClient(client)
+		if err != nil {
+			return err
+		}
+		return e.JSON(http.StatusOK, clientSave)
+	}
+}
+
+// HandleUserCreateUpdateRequest introspect request handling
+func (s *Server) HandleUserCreateRequest(e echo.Context) (err error) {
+	w := e.Response()
+	token := string(e.QueryParam("token"))
+
+	if token != "" {
+		info, err := s.Manager.LoadAccessToken(token)
+
+		if err != nil {
+			err = s.tokenError(w, err)
+			return err
+		}
+
+		err = s.token(w, s.GetTokenData(info), nil)
+		return err
+	} else {
+		http.Error(w, "Token is required", http.StatusBadRequest)
+		return
+	}
+}
+
+// HandleUserCreateUpdateRequest introspect request handling
+func (s *Server) HandleUserUpdateRequest(e echo.Context) (err error) {
+	w := e.Response()
+	token := string(e.QueryParam("token"))
+
+	if token != "" {
+		info, err := s.Manager.LoadAccessToken(token)
+
+		if err != nil {
+			err = s.tokenError(w, err)
+			return err
+		}
+
+		err = s.token(w, s.GetTokenData(info), nil)
+		return err
+	} else {
+		http.Error(w, "Token is required", http.StatusBadRequest)
+		return
+	}
+}
+
+// HandleUserGetRequest introspect request handling
+func (s *Server) HandleUserGetRequest(e echo.Context) (err error) {
+	w := e.Response()
+	token := string(e.QueryParam("token"))
 
 	if token != "" {
 		info, err := s.Manager.LoadAccessToken(token)
@@ -612,4 +718,24 @@ func (s *Server) ValidationBearerToken(r *http.Request) (ti models.TokenInfo, er
 	ti, err = s.Manager.LoadAccessToken(accessToken)
 
 	return
+}
+
+
+// ValidationBearerToken validation the bearer tokens
+// https://tools.ietf.org/html/rfc6750
+func (s *Server) MiddlewareAuthClient(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		accessToken, ok := s.BearerAuth(c.Request())
+		if !ok {
+			return errors.ErrInvalidAccessToken
+		}
+		ti, err := s.Manager.LoadAccessToken(accessToken)
+		if err != nil {
+			err = s.tokenError(c.Response(), err)
+			return err
+		}
+
+		c.Set("UserID", ti.GetClientID())
+		return next(c)
+	}
 }

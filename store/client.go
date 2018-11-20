@@ -1,69 +1,158 @@
 package store
 
 import (
-	"errors"
+	"encoding/json"
+	"fmt"
+	"github.com/GymWorkoutApp/gwa_auth/cache"
 	"github.com/GymWorkoutApp/gwa_auth/database"
 	"github.com/GymWorkoutApp/gwa_auth/models"
-	"sync"
+	"github.com/GymWorkoutApp/gwa_auth/utils"
+	"github.com/go-redis/redis"
+	"os"
+	"time"
 )
 
 // NewClientStore create client store
 func NewClientStore() ClientStore {
-	return &ClientStoreMemory{
-		data: make(map[string]models.ClientInfo),
+	client := &ClientStoreStandard{
+		redisClient: *cache.GetRedisClient(),
 	}
+	pong, err := client.redisClient.Ping().Result()
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	} else {
+		fmt.Println("Redis online on " + os.Getenv("REDIS_HOST") + " - " + pong)
+	}
+
+	return client
 }
 
 // ClientStore client information store
-type ClientStoreMemory struct {
-	sync.RWMutex
-	data map[string]models.ClientInfo
+type ClientStoreStandard struct {
+	redisClient redis.Client
 }
 
 // GetByID according to the ID for the client information
-func (cs *ClientStoreMemory) GetByID(id string) (cli models.ClientInfo, err error) {
-	cs.RLock()
-	defer cs.RUnlock()
-	if c, ok := cs.data[id]; ok {
-		cli = c
-		return
+func (cs *ClientStoreStandard) GetByID(id string) (models.ClientInfo, error) {
+	result := cs.redisClient.HGet(id, "client-info")
+	if result.Val() != "" {
+		client := models.Client{}
+		b, err := result.Bytes()
+		if err != nil {
+			return nil, err
+		}
+		if err = json.Unmarshal(b, &client); err != nil {
+			return nil, err
+		}
+		return client, nil
 	}
-	err = errors.New("not found")
-	return
-}
 
-// Set set client information
-func (cs *ClientStoreMemory) Set(cli models.ClientInfo) (err error) {
-	cs.Lock()
-	defer cs.Unlock()
-	cs.data[cli.GetID()] = cli
-	return
-}
-
-
-
-// NewClientStore create client store
-func NewClientStoreDB() ClientStore {
-	return &ClientStoreDB{}
-}
-
-// ClientStore client information store
-type ClientStoreDB struct {
-
-}
-
-// GetByID according to the ID for the client information
-func (cs *ClientStoreDB) GetByID(id string) (models.ClientInfo, error) {
 	db := database.NewManageDB().Get()
 	defer db.Close()
 	client := models.Client{}
 	db.Where("id = ?", id).First(&client)
+
+	clientJson, err := jsonMarshal(client)
+	if err != nil {
+		return nil, err
+	}
+
+	cs.redisClient.HSet(id, "client-info", clientJson)
+	cs.redisClient.Expire(id, time.Hour)
+
 	return client, nil
 }
 
-// Set set client information
-func (cs *ClientStoreDB) Set(client models.ClientInfo) (err error) {
+// GetByID according to the ID for the client information
+func (cs *ClientStoreStandard) Get(cli models.ClientInfo) ([]models.ClientInfo, error) {
+	clientJson, err := json.Marshal(cli)
+	if err != nil {
+		return nil, err
+	}
+
+	key := utils.Hash(clientJson)
+	clients := make([]models.Client, 0)
+	result := cs.redisClient.HGet(key, "client-info")
+	if result.Val() != "" {
+		b, err := result.Bytes()
+		if err != nil {
+			return nil, err
+		}
+		if err = json.Unmarshal(b, &clients); err != nil {
+			return nil, err
+		}
+	} else {
+		db := database.NewManageDB().Get()
+		defer db.Close()
+
+		if cli.GetID() != "" {
+			db = db.Where("id = ?", cli.GetID())
+		}
+
+		if cli.GetDomain() != "" {
+			db = db.Where("domain = ?", cli.GetDomain())
+		}
+
+		if cli.GetUserID() != "" {
+			db = db.Where("user_id = ?", cli.GetUserID())
+		}
+
+		db.Find(&clients)
+
+		clientsJson, err := jsonMarshal(clients)
+		if err != nil {
+			panic(err)
+		}
+
+		cs.redisClient.HSet(key, "client-info", clientsJson)
+	}
+
+	clientInfos := make([]models.ClientInfo, len(clients))
+	for i, c := range clients {
+		clientInfos[i] = c
+	}
+
+	return clientInfos, nil
+}
+
+// GetByID according to the ID for the client information
+func (cs *ClientStoreStandard) RemoveByID(id string) (error) {
 	db := database.NewManageDB().Get()
 	defer db.Close()
-	return db.Save(client).Error
+	err := db.Where("id = ?", "id").Delete(models.Client{}).Error
+	if err != nil {
+		cs.redisClient.Del(id)
+	}
+	return err
+}
+
+// Set set client information
+func (cs *ClientStoreStandard) Create(client models.ClientInfo) (models.ClientInfo,  error) {
+	db := database.NewManageDB().Get()
+	defer db.Close()
+	err := db.Create(client).Error
+	if err != nil {
+		clientJson, err := jsonMarshal(client)
+		if err != nil {
+			return nil, err
+		}
+		cs.redisClient.HSet(client.GetID(), "client-info", clientJson)
+	}
+	return client, err
+}
+
+// Set set client information
+func (cs *ClientStoreStandard) Update(client models.ClientInfo) (models.ClientInfo, error) {
+	db := database.NewManageDB().Get()
+	defer db.Close()
+	err := db.Update(client).Error
+	if err != nil {
+		clientJson, err := jsonMarshal(client)
+		if err != nil {
+			return nil, err
+		}
+		cs.redisClient.HSet(client.GetID(), "client-info", clientJson)
+	}
+	return client, err
 }

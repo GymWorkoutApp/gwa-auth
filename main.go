@@ -2,19 +2,20 @@ package main
 
 import (
 	"fmt"
-	"github.com/GymWorkoutApp/gwa_auth/cache"
 	"github.com/GymWorkoutApp/gwa_auth/database"
 	"github.com/GymWorkoutApp/gwa_auth/models"
 	"github.com/GymWorkoutApp/gwa_auth/store"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/labstack/echo/middleware"
+	echolog "github.com/labstack/gommon/log"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/GymWorkoutApp/gwa_auth/errors"
 	"github.com/GymWorkoutApp/gwa_auth/generates"
 	"github.com/GymWorkoutApp/gwa_auth/manager"
 	"github.com/GymWorkoutApp/gwa_auth/server"
+	"github.com/labstack/echo"
 )
 
 func main() {
@@ -23,26 +24,17 @@ func main() {
 	managerServer.MapAccessGenerate(generates.NewJWTAccessGenerate([]byte("00000000"), jwt.SigningMethodHS512))
 
 	// token memory store
-	managerServer.MapTokenStorage(redis.NewRedisStore(&redis.Options{
-		Addr: "127.0.0.1:6379",
-		DB: 15,
-	}))
+	managerServer.MapTokenStorage(store.NewRedisStore())
 
 	srv := server.NewDefaultServer(managerServer)
 
 	db := database.NewManageDB().Get()
 	defer db.Close()
-	db.AutoMigrate(&models.Client{})
+	db.AutoMigrate(&models.Client{}, &models.User{})
 
-	// client memory store
-	clientStore := store.NewClientStoreDB()
-	clientStore.Set(&models.Client{
-		Secret: "999999",
-		Domain: "http://localhost",
-	})
-	managerServer.MapClientStorage(clientStore)
+	// client store
+	managerServer.MapClientStorage(store.NewClientStore())
 
-	srv.SetAllowGetAccessRequest(true)
 	srv.SetClientInfoHandler(server.ClientFormHandler)
 
 	srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {
@@ -55,22 +47,32 @@ func main() {
 		log.Println("Response Error:", re.Error.Error())
 	})
 
-	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
-		err := srv.HandleAuthorizeRequest(w, r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-		}
-	})
+	// Http handlers
 
-	http.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
-		srv.HandleTokenRequest(w, r)
-	})
+	e := echo.New()
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "${time_rfc3339_nano} - [${uri} - ${method}] - ${status} - ${remote_ip}\n",
+	}))
 
-	http.HandleFunc("/introspect", func (w http.ResponseWriter, r *http.Request) {
-		srv.HandleIntrospectRequest(w, r)
-	})
+	oauth2 := e.Group("oauth2")
 
-	port := os.Getenv("PORT")
-	log.Println(fmt.Sprintf("Running on :%v", port))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v",port), nil))
+	oauth2.GET("/authorize", srv.HandleAuthorizeRequest)
+	oauth2.POST("/token", srv.HandleTokenRequest)
+	oauth2.GET("/introspect", srv.HandleIntrospectRequest)
+
+	auth := e.Group("auth")
+	auth.Use(srv.MiddlewareAuthClient)
+	auth.POST("/users", srv.HandleUserCreateRequest)
+	auth.PUT("/users/:id", srv.HandleUserUpdateRequest)
+	auth.PATCH("/users/:id", srv.HandleUserUpdateRequest)
+	auth.GET("/users", srv.HandleUserGetRequest)
+
+	auth.POST("/clients", srv.HandleClientCreateRequest)
+	auth.PUT("/clients/:id", srv.HandleClientUpdateRequest)
+	auth.PATCH("/clients/:id", srv.HandleClientUpdateRequest)
+	auth.GET("/clients", srv.HandleClientGetRequest)
+	auth.GET("/clients/:id", srv.HandleClientGetRequest)
+
+	e.Logger.SetLevel(echolog.INFO)
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%v",os.Getenv("PORT"))))
 }
