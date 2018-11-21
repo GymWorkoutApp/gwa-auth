@@ -5,7 +5,7 @@ volumes:
 
 services:
   gwa_auth:
-    image: golang:alpine
+    image: gwa_auth:latest
     container_name: gwa_auth
     build: .
     expose:
@@ -15,13 +15,11 @@ services:
     depends_on:
     - redis_gwa_auth
     - postgres_gwa_auth
-    links:
-    - redis_gwa_auth
     env_file:
     - environments/hml.env
 
   redis_gwa_auth:
-    image: cache:alpine
+    image: redis:alpine
     container_name: redis_gwa_auth
     ports:
     - 6379:6379

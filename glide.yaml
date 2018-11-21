@@ -2,6 +2,8 @@ package: github.com/GymWorkoutApp/gwa_auth
 import:
 - package: github.com/jinzhu/gorm
   vcs: git
+- package: github.com/jinzhu/gorm/tree/master/dialects/postgres
+  vcs: git
 - package: github.com/labstack/echo/...
   vcs: git
 - package: github.com/golang/crypto/...

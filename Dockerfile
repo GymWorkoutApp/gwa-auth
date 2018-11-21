@@ -1,7 +1,9 @@
-FROM golang:alpine
+# Build Multstage
 
+# Builder
+FROM golang:alpine as builder
 WORKDIR /go/src/github.com/GymWorkoutApp/gwa_auth
-
+ADD . /go/src/github.com/GymWorkoutApp/gwa_auth
 RUN apk add --update --no-cache \
     make \
     build-base \
@@ -12,17 +14,18 @@ RUN apk add --update --no-cache \
     libffi-dev \
     postgresql-dev \
     gcc g++ \
+    glide \
     ca-certificates && \
-    update-ca-certificates
-
-ADD . /go/src/github.com/GymWorkoutApp/gwa_auth
-
-RUN cp /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime && \
-    echo "America/Sao_Paulo" > /etc/timezone
-
-EXPOSE 8080
-
-RUN apk update && \
-    apk add glide && \
+    update-ca-certificates && \
+    cp /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime && \
+    echo "America/Sao_Paulo" > /etc/timezone && \
     glide install && \
-    go build
+    glide up && \
+    CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gwa_auth .
+
+# Final image
+FROM alpine:3.8
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+COPY --from=builder /go/src/github.com/GymWorkoutApp/gwa_auth .
+CMD ["./gwa_auth"]
