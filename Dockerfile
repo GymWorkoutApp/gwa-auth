@@ -28,4 +28,4 @@ FROM alpine:3.8
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 COPY --from=builder /go/src/github.com/GymWorkoutApp/gwa_auth .
-CMD ["./gwa_auth"]
+ENTRYPOINT ["sh", "app.sh", "./gwa_auth"]
