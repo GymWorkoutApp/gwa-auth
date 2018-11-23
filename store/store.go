@@ -1,25 +1,28 @@
 package store
 
-import "github.com/GymWorkoutApp/gwa_auth/models"
+import (
+	"github.com/GymWorkoutApp/gwa_auth/models"
+	"github.com/labstack/echo"
+)
 
 type (
 	// ClientStore the client information storage interface
 	ClientStore interface {
 		// according to the ID for the client information
-		GetByID(id string) (models.ClientInfo, error)
-		Get(cli models.ClientInfo) ([]models.ClientInfo, error)
-		Create(cli models.ClientInfo) (models.ClientInfo, error)
-		Update(cli models.ClientInfo) (models.ClientInfo, error)
-		RemoveByID(id string) (error)
+		GetByID(id string, e echo.Context) (models.ClientInfo, error)
+		Get(cli models.ClientInfo, e echo.Context) ([]models.ClientInfo, error)
+		Create(cli models.ClientInfo, e echo.Context) (models.ClientInfo, error)
+		Update(cli models.ClientInfo, e echo.Context) (models.ClientInfo, error)
+		RemoveByID(id string,  e echo.Context) (error)
 	}
 
 	// ClientStore the client information storage interface
 	UserStore interface {
 		// according to the ID for the client information
-		GetByID(id string) (models.UserInfo, error)
-		Create(cli models.UserInfo) (models.UserInfo, error)
-		Update(cli models.UserInfo) (models.UserInfo, error)
-		RemoveByID(id string) (error)
+		GetByID(id string, e echo.Context) (models.UserInfo, error)
+		Create(cli models.UserInfo, e echo.Context) (models.UserInfo, error)
+		Update(cli models.UserInfo, e echo.Context) (models.UserInfo, error)
+		RemoveByID(id string, e echo.Context) (error)
 	}
 
 	// TokenStore the token information storage interface

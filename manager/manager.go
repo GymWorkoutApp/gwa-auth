@@ -6,6 +6,7 @@ import (
 	"github.com/GymWorkoutApp/gwa_auth/generates"
 	"github.com/GymWorkoutApp/gwa_auth/models"
 	"github.com/GymWorkoutApp/gwa_auth/store"
+	"github.com/labstack/echo"
 	"time"
 )
 
@@ -129,8 +130,8 @@ func (m *ManagerStandard) MustTokenStorage(stor store.TokenStore, err error) {
 }
 
 // GetClientById get the client information
-func (m *ManagerStandard) GetClientById(clientID string) (cli models.ClientInfo, err error) {
-	cli, err = m.clientStore.GetByID(clientID)
+func (m *ManagerStandard) GetClientById(clientID string, e echo.Context) (cli models.ClientInfo, err error) {
+	cli, err = m.clientStore.GetByID(clientID, e)
 	if err != nil {
 		return
 	} else if cli == nil {
@@ -140,8 +141,8 @@ func (m *ManagerStandard) GetClientById(clientID string) (cli models.ClientInfo,
 }
 
 // GetClientById get the client information
-func (m *ManagerStandard) GetClient(cli models.ClientInfo) ([]models.ClientInfo, error) {
-	clients, err := m.clientStore.Get(cli)
+func (m *ManagerStandard) GetClient(cli models.ClientInfo, e echo.Context) ([]models.ClientInfo, error) {
+	clients, err := m.clientStore.Get(cli, e)
 	if err != nil {
 		return nil, err
 	} else if cli == nil {
@@ -151,18 +152,18 @@ func (m *ManagerStandard) GetClient(cli models.ClientInfo) ([]models.ClientInfo,
 }
 
 // CreateClient get the client information
-func (m *ManagerStandard) CreateClient(cli models.ClientInfo) (models.ClientInfo, error) {
-	return m.clientStore.Create(cli)
+func (m *ManagerStandard) CreateClient(cli models.ClientInfo, e echo.Context) (models.ClientInfo, error) {
+	return m.clientStore.Create(cli, e)
 }
 
 // UpdateClient get the client information
-func (m *ManagerStandard) UpdateClient(cli models.ClientInfo) (models.ClientInfo, error) {
-	return m.clientStore.Update(cli)
+func (m *ManagerStandard) UpdateClient(cli models.ClientInfo, e echo.Context) (models.ClientInfo, error) {
+	return m.clientStore.Update(cli, e)
 }
 
 // GetClientById get the client information
-func (m *ManagerStandard) GetUser(userID string) (user models.UserInfo, err error) {
-	user, err = m.userStore.GetByID(userID)
+func (m *ManagerStandard) GetUser(userID string, e echo.Context) (user models.UserInfo, err error) {
+	user, err = m.userStore.GetByID(userID, e)
 	if err != nil {
 		return
 	} else if user == nil {
@@ -172,18 +173,18 @@ func (m *ManagerStandard) GetUser(userID string) (user models.UserInfo, err erro
 }
 
 // CreateClient get the client information
-func (m *ManagerStandard) CreateUser(user models.UserInfo) (models.UserInfo, error) {
-	return m.userStore.Create(user)
+func (m *ManagerStandard) CreateUser(user models.UserInfo, e echo.Context) (models.UserInfo, error) {
+	return m.userStore.Create(user, e)
 }
 
 // UpdateClient get the client information
-func (m *ManagerStandard) UpdateUser(user models.UserInfo) (models.UserInfo, error) {
-	return m.userStore.Update(user)
+func (m *ManagerStandard) UpdateUser(user models.UserInfo, e echo.Context) (models.UserInfo, error) {
+	return m.userStore.Update(user, e)
 }
 
 // GenerateAuthToken generate the authorization token(code)
-func (m *ManagerStandard) GenerateAuthToken(rt constants.ResponseType, tgr *TokenGenerateRequest) (authToken models.TokenInfo, err error) {
-	cli, err := m.GetClientById(tgr.ClientID)
+func (m *ManagerStandard) GenerateAuthToken(rt constants.ResponseType, tgr *TokenGenerateRequest, e echo.Context) (authToken models.TokenInfo, err error) {
+	cli, err := m.GetClientById(tgr.ClientID, e)
 	if err != nil {
 		return
 	} else if verr := m.validateURI(cli.GetDomain(), tgr.RedirectURI); verr != nil {
@@ -279,7 +280,7 @@ func (m *ManagerStandard) delAuthorizationCode(code string) (err error) {
 }
 
 // GenerateAccessToken generate the access token
-func (m *ManagerStandard) GenerateAccessToken(gt constants.GrantType, tgr *TokenGenerateRequest) (accessToken models.TokenInfo, err error) {
+func (m *ManagerStandard) GenerateAccessToken(gt constants.GrantType, tgr *TokenGenerateRequest, e echo.Context) (accessToken models.TokenInfo, err error) {
 	if gt == constants.AuthorizationCode {
 		ti, terr := m.getAuthorizationCode(tgr.Code)
 		if terr != nil {
@@ -299,7 +300,7 @@ func (m *ManagerStandard) GenerateAccessToken(gt constants.GrantType, tgr *Token
 		}
 	}
 
-	cli, err := m.GetClientById(tgr.ClientID)
+	cli, err := m.GetClientById(tgr.ClientID, e)
 	if err != nil {
 		return
 	} else if tgr.ClientSecret != cli.GetSecret() {
@@ -357,8 +358,8 @@ func (m *ManagerStandard) GenerateAccessToken(gt constants.GrantType, tgr *Token
 }
 
 // RefreshAccessToken refreshing an access token
-func (m *ManagerStandard) RefreshAccessToken(tgr *TokenGenerateRequest) (accessToken models.TokenInfo, err error) {
-	cli, err := m.GetClientById(tgr.ClientID)
+func (m *ManagerStandard) RefreshAccessToken(tgr *TokenGenerateRequest, e echo.Context) (accessToken models.TokenInfo, err error) {
+	cli, err := m.GetClientById(tgr.ClientID, e)
 	if err != nil {
 		return
 	} else if tgr.ClientSecret != cli.GetSecret() {

@@ -8,7 +8,8 @@ import (
 "github.com/GymWorkoutApp/gwa_auth/database"
 "github.com/GymWorkoutApp/gwa_auth/models"
 "github.com/go-redis/redis"
-"time"
+	"github.com/labstack/echo"
+	"time"
 )
 
 // NewClientStore create user store
@@ -32,7 +33,7 @@ type UserStoreStandard struct {
 }
 
 // GetByID according to the ID for the user information
-func (cs *UserStoreStandard) GetByID(id string) (models.UserInfo, error) {
+func (cs *UserStoreStandard) GetByID(id string, e echo.Context) (models.UserInfo, error) {
 	result := cs.redisClient.Get(id)
 	if result != nil {
 		user := models.User{}
@@ -45,7 +46,7 @@ func (cs *UserStoreStandard) GetByID(id string) (models.UserInfo, error) {
 		}
 	}
 
-	db := database.NewManageDB().Get()
+	db := database.NewManageDB().Get(e.Request().Context())
 	defer db.Close()
 	user := models.User{}
 	db.Where("id = ?", id).First(&user)
@@ -61,8 +62,8 @@ func (cs *UserStoreStandard) GetByID(id string) (models.UserInfo, error) {
 }
 
 // GetByID according to the ID for the user information
-func (cs *UserStoreStandard) RemoveByID(id string) (error) {
-	db := database.NewManageDB().Get()
+func (cs *UserStoreStandard) RemoveByID(id string, e echo.Context) (error) {
+	db := database.NewManageDB().Get(e.Request().Context())
 	defer db.Close()
 	err := db.Where("id = ?", "id").Delete(models.User{}).Error
 	if err != nil {
@@ -72,8 +73,8 @@ func (cs *UserStoreStandard) RemoveByID(id string) (error) {
 }
 
 // Set set user information
-func (cs *UserStoreStandard) Create(user models.UserInfo) (models.UserInfo,  error) {
-	db := database.NewManageDB().Get()
+func (cs *UserStoreStandard) Create(user models.UserInfo, e echo.Context) (models.UserInfo,  error) {
+	db := database.NewManageDB().Get(e.Request().Context())
 	defer db.Close()
 	err := db.Create(user).Error
 	if err != nil {
@@ -87,8 +88,8 @@ func (cs *UserStoreStandard) Create(user models.UserInfo) (models.UserInfo,  err
 }
 
 // Set set user information
-func (cs *UserStoreStandard) Update(user models.UserInfo) (models.UserInfo, error) {
-	db := database.NewManageDB().Get()
+func (cs *UserStoreStandard) Update(user models.UserInfo, e echo.Context) (models.UserInfo, error) {
+	db := database.NewManageDB().Get(e.Request().Context())
 	defer db.Close()
 	err := db.Update(user).Error
 	if err != nil {

@@ -180,7 +180,7 @@ func (s *Server) ValidationAuthorizeRequest(c echo.Context) (req *AuthorizeReque
 }
 
 // GetAuthorizeToken get authorization token(code)
-func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti models.TokenInfo, err error) {
+func (s *Server) GetAuthorizeToken(req *AuthorizeRequest, e echo.Context) (ti models.TokenInfo, err error) {
 	// check the client allows the grant type
 	if fn := s.ClientAuthorizedHandler; fn != nil {
 		gt := constants.AuthorizationCode
@@ -221,7 +221,7 @@ func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti models.TokenInfo, 
 		Request:        req.Request,
 	}
 
-	ti, err = s.Manager.GenerateAuthToken(req.ResponseType, tgr)
+	ti, err = s.Manager.GenerateAuthToken(req.ResponseType, tgr, e)
 	return
 }
 
@@ -281,7 +281,7 @@ func (s *Server) HandleAuthorizeRequest(c echo.Context) (err error) {
 		req.AccessTokenExp = exp
 	}
 
-	ti, verr := s.GetAuthorizeToken(req)
+	ti, verr := s.GetAuthorizeToken(req, c)
 	if verr != nil {
 		err = s.redirectError(r, req, verr)
 		return
@@ -369,7 +369,7 @@ func (s *Server) CheckGrantType(gt constants.GrantType) bool {
 }
 
 // GetAccessToken access token
-func (s *Server) GetAccessToken(gt constants.GrantType, tgr *manager.TokenGenerateRequest) (ti models.TokenInfo, err error) {
+func (s *Server) GetAccessToken(gt constants.GrantType, tgr *manager.TokenGenerateRequest, e echo.Context) (ti models.TokenInfo, err error) {
 	if allowed := s.CheckGrantType(gt); !allowed {
 		err = errors.ErrUnauthorizedClient
 		return
@@ -388,7 +388,7 @@ func (s *Server) GetAccessToken(gt constants.GrantType, tgr *manager.TokenGenera
 
 	switch gt {
 	case constants.AuthorizationCode:
-		ati, verr := s.Manager.GenerateAccessToken(gt, tgr)
+		ati, verr := s.Manager.GenerateAccessToken(gt, tgr, e)
 		if verr != nil {
 
 			if verr == errors.ErrInvalidAuthorizeCode {
@@ -413,7 +413,7 @@ func (s *Server) GetAccessToken(gt constants.GrantType, tgr *manager.TokenGenera
 				return
 			}
 		}
-		ti, err = s.Manager.GenerateAccessToken(gt, tgr)
+		ti, err = s.Manager.GenerateAccessToken(gt, tgr, e)
 	case constants.Refreshing:
 		// check scope
 		if scope, scopeFn := tgr.Scope, s.RefreshingScopeHandler; scope != "" && scopeFn != nil {
@@ -438,7 +438,7 @@ func (s *Server) GetAccessToken(gt constants.GrantType, tgr *manager.TokenGenera
 			}
 		}
 
-		rti, verr := s.Manager.RefreshAccessToken(tgr)
+		rti, verr := s.Manager.RefreshAccessToken(tgr, e)
 		if verr != nil {
 			if verr == errors.ErrInvalidRefreshToken || verr == errors.ErrExpiredRefreshToken {
 				err = errors.ErrInvalidGrant
@@ -490,7 +490,7 @@ func (s *Server) HandleTokenRequest(c echo.Context) (error) {
 		return s.tokenError(c.Response(), verr)
 	}
 
-	ti, verr := s.GetAccessToken(gt, tgr)
+	ti, verr := s.GetAccessToken(gt, tgr, c)
 	if verr != nil {
 		return s.tokenError(w, verr)
 	}
@@ -525,7 +525,7 @@ func (s *Server) HandleClientCreateRequest(e echo.Context) (error) {
 	if err := e.Bind(client); err != nil {
 		return err
 	}
-	clientSave, err := s.Manager.CreateClient(client)
+	clientSave, err := s.Manager.CreateClient(client, e)
 	if err != nil {
 		return err
 	}
@@ -538,7 +538,7 @@ func (s *Server) HandleClientUpdateRequest(e echo.Context) (err error) {
 	if err := e.Bind(client); err != nil {
 		return err
 	}
-	clientSave, err := s.Manager.UpdateClient(client)
+	clientSave, err := s.Manager.UpdateClient(client, e)
 	if err != nil {
 		return err
 	}
@@ -553,13 +553,13 @@ func (s *Server) HandleClientGetRequest(e echo.Context) (err error) {
 	}
 	id := e.Param("id")
 	if id != "" {
-		clientSave, err := s.Manager.GetClientById(id)
+		clientSave, err := s.Manager.GetClientById(id, e)
 		if err != nil {
 			return err
 		}
 		return e.JSON(http.StatusOK, clientSave)
 	} else {
-		clientSave, err := s.Manager.GetClient(client)
+		clientSave, err := s.Manager.GetClient(client, e)
 		if err != nil {
 			return err
 		}

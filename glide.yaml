@@ -8,4 +8,6 @@ import:
   vcs: git
 - package: github.com/golang/crypto/...
   vcs: git
+- package: go get go.elastic.co/apm
+  vcs: git
 

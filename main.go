@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/GymWorkoutApp/gwa_auth/database"
 	"github.com/GymWorkoutApp/gwa_auth/models"
@@ -8,6 +9,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/middleware"
 	echolog "github.com/labstack/gommon/log"
+	"go.elastic.co/apm/module/apmecho"
 	"log"
 	"os"
 
@@ -28,7 +30,7 @@ func main() {
 
 	srv := server.NewDefaultServer(managerServer)
 
-	db := database.NewManageDB().Get()
+	db := database.NewManageDB().Get(context.TODO())
 	defer db.Close()
 	db.AutoMigrate(&models.Client{}, &models.User{})
 
@@ -50,6 +52,7 @@ func main() {
 	// Http handlers
 
 	e := echo.New()
+	e.Use(apmecho.Middleware())
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "${time_rfc3339_nano} - [${uri} - ${method}] - ${status} - ${remote_ip}\n",
 	}))
@@ -74,5 +77,5 @@ func main() {
 	auth.GET("/clients/:id", srv.HandleClientGetRequest)
 
 	e.Logger.SetLevel(echolog.INFO)
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%v",os.Getenv("PORT"))))
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%v", os.Getenv("PORT"))))
 }

@@ -3,6 +3,7 @@ package manager
 import (
 	"github.com/GymWorkoutApp/gwa_auth/constants"
 	"github.com/GymWorkoutApp/gwa_auth/models"
+	"github.com/labstack/echo"
 	"net/http"
 	"time"
 )
@@ -23,34 +24,34 @@ type TokenGenerateRequest struct {
 // Manager authorization management interface
 type Manager interface {
 	// get the client information
-	GetClientById(clientID string) (cli models.ClientInfo, err error)
+	GetClientById(clientID string, e echo.Context) (cli models.ClientInfo, err error)
 
 	// get the client information
-	GetClient(cli models.ClientInfo) ([]models.ClientInfo, error)
+	GetClient(cli models.ClientInfo, e echo.Context) ([]models.ClientInfo, error)
 
 	// create the client information
-	CreateClient(cli models.ClientInfo) (models.ClientInfo, error)
+	CreateClient(cli models.ClientInfo, e echo.Context) (models.ClientInfo, error)
 
 	// update the client information
-	UpdateClient(cli models.ClientInfo) (models.ClientInfo, error)
+	UpdateClient(cli models.ClientInfo, e echo.Context) (models.ClientInfo, error)
 
 	// get the client information
-	GetUser(userID string) (cli models.UserInfo, err error)
+	GetUser(userID string, e echo.Context) (cli models.UserInfo, err error)
 
 	// create the client information
-	CreateUser(user models.UserInfo) (models.UserInfo, error)
+	CreateUser(user models.UserInfo, e echo.Context) (models.UserInfo, error)
 
 	// update the client information
-	UpdateUser(user models.UserInfo) (models.UserInfo, error)
+	UpdateUser(user models.UserInfo, e echo.Context) (models.UserInfo, error)
 
 	// generate the authorization token(code)
-	GenerateAuthToken(rt constants.ResponseType, tgr *TokenGenerateRequest) (authToken models.TokenInfo, err error)
+	GenerateAuthToken(rt constants.ResponseType, tgr *TokenGenerateRequest, e echo.Context) (authToken models.TokenInfo, err error)
 
 	// generate the access token
-	GenerateAccessToken(rt constants.GrantType, tgr *TokenGenerateRequest) (accessToken models.TokenInfo, err error)
+	GenerateAccessToken(rt constants.GrantType, tgr *TokenGenerateRequest, e echo.Context) (accessToken models.TokenInfo, err error)
 
 	// refreshing an access token
-	RefreshAccessToken(tgr *TokenGenerateRequest) (accessToken models.TokenInfo, err error)
+	RefreshAccessToken(tgr *TokenGenerateRequest, e echo.Context) (accessToken models.TokenInfo, err error)
 
 	// use the access token to delete the token information
 	RemoveAccessToken(access string) (err error)

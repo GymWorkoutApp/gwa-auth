@@ -8,6 +8,7 @@ import (
 	"github.com/GymWorkoutApp/gwa_auth/models"
 	"github.com/GymWorkoutApp/gwa_auth/utils"
 	"github.com/go-redis/redis"
+	"github.com/labstack/echo"
 	"os"
 	"time"
 )
@@ -34,7 +35,7 @@ type ClientStoreStandard struct {
 }
 
 // GetByID according to the ID for the client information
-func (cs *ClientStoreStandard) GetByID(id string) (models.ClientInfo, error) {
+func (cs *ClientStoreStandard) GetByID(id string, e echo.Context) (models.ClientInfo, error) {
 	result := cs.redisClient.HGet(id, "client-info")
 	if result.Val() != "" {
 		client := models.Client{}
@@ -48,7 +49,7 @@ func (cs *ClientStoreStandard) GetByID(id string) (models.ClientInfo, error) {
 		return client, nil
 	}
 
-	db := database.NewManageDB().Get()
+	db := database.NewManageDB().Get(e.Request().Context())
 	defer db.Close()
 	client := models.Client{}
 	db.Where("id = ?", id).First(&client)
@@ -65,7 +66,7 @@ func (cs *ClientStoreStandard) GetByID(id string) (models.ClientInfo, error) {
 }
 
 // GetByID according to the ID for the client information
-func (cs *ClientStoreStandard) Get(cli models.ClientInfo) ([]models.ClientInfo, error) {
+func (cs *ClientStoreStandard) Get(cli models.ClientInfo, e echo.Context) ([]models.ClientInfo, error) {
 	clientJson, err := json.Marshal(cli)
 	if err != nil {
 		return nil, err
@@ -83,7 +84,7 @@ func (cs *ClientStoreStandard) Get(cli models.ClientInfo) ([]models.ClientInfo, 
 			return nil, err
 		}
 	} else {
-		db := database.NewManageDB().Get()
+		db := database.NewManageDB().Get(e.Request().Context())
 		defer db.Close()
 
 		if cli.GetID() != "" {
@@ -117,8 +118,8 @@ func (cs *ClientStoreStandard) Get(cli models.ClientInfo) ([]models.ClientInfo, 
 }
 
 // GetByID according to the ID for the client information
-func (cs *ClientStoreStandard) RemoveByID(id string) (error) {
-	db := database.NewManageDB().Get()
+func (cs *ClientStoreStandard) RemoveByID(id string, e echo.Context) (error) {
+	db := database.NewManageDB().Get(e.Request().Context())
 	defer db.Close()
 	err := db.Where("id = ?", "id").Delete(models.Client{}).Error
 	if err != nil {
@@ -128,8 +129,8 @@ func (cs *ClientStoreStandard) RemoveByID(id string) (error) {
 }
 
 // Set set client information
-func (cs *ClientStoreStandard) Create(client models.ClientInfo) (models.ClientInfo,  error) {
-	db := database.NewManageDB().Get()
+func (cs *ClientStoreStandard) Create(client models.ClientInfo, e echo.Context) (models.ClientInfo,  error) {
+	db := database.NewManageDB().Get(e.Request().Context())
 	defer db.Close()
 	err := db.Create(client).Error
 	if err != nil {
@@ -143,8 +144,8 @@ func (cs *ClientStoreStandard) Create(client models.ClientInfo) (models.ClientIn
 }
 
 // Set set client information
-func (cs *ClientStoreStandard) Update(client models.ClientInfo) (models.ClientInfo, error) {
-	db := database.NewManageDB().Get()
+func (cs *ClientStoreStandard) Update(client models.ClientInfo, e echo.Context) (models.ClientInfo, error) {
+	db := database.NewManageDB().Get(e.Request().Context())
 	defer db.Close()
 	err := db.Update(client).Error
 	if err != nil {
