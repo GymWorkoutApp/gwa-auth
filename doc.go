@@ -3,9 +3,6 @@
 //     package main
 //     import (
 //         "net/http"
-//         "gopkg.in/oauth2.v3/manager"
-//         "gopkg.in/oauth2.v3/server"
-//         "gopkg.in/oauth2.v3/store"
 //     )
 //     func main() {
 //         manager := manager.NewDefaultManager()

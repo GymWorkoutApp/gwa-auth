@@ -5,15 +5,8 @@ FROM golang:alpine as builder
 WORKDIR /go/src/github.com/GymWorkoutApp/gwa_auth
 ADD . /go/src/github.com/GymWorkoutApp/gwa_auth
 RUN apk add --update --no-cache \
-    make \
-    build-base \
-    jq \
-    curl \
     tzdata \
     git \
-    libffi-dev \
-    postgresql-dev \
-    gcc g++ \
     glide \
     ca-certificates && \
     update-ca-certificates && \
