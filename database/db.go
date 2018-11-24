@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/jinzhu/gorm"
-	_ "github.com/lib/pq"
 	"go.elastic.co/apm/module/apmgorm"
+	_ "go.elastic.co/apm/module/apmgorm/dialects/postgres"
 	"os"
 )
 

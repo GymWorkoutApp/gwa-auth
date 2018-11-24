@@ -260,7 +260,7 @@
           <entry key="Dockerfile" value="144" />
           <entry key="env" value="58" />
           <entry key="gitignore" value="10" />
-          <entry key="go" value="5650" />
+          <entry key="go" value="5658" />
           <entry key="sh" value="25" />
           <entry key="sql" value="1" />
           <entry key="txt" value="46" />
@@ -273,7 +273,7 @@
           <entry key=".env file" value="58" />
           <entry key="Bash" value="7" />
           <entry key="Dockerfile" value="144" />
-          <entry key="Go" value="5650" />
+          <entry key="Go" value="5658" />
           <entry key="PLAIN_TEXT" value="74" />
           <entry key="Scratch" value="1" />
           <entry key="YAML" value="205" />
@@ -338,8 +338,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/database/db.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="268">
-              <caret line="28" lean-forward="true" selection-start-line="28" selection-end-line="28" />
+            <state relative-caret-position="155">
+              <caret line="16" lean-forward="true" selection-start-line="16" selection-end-line="16" />
               <folding>
                 <element signature="e#18#170#0" expanded="true" />
               </folding>
@@ -612,7 +612,7 @@
     <frame x="0" y="23" width="1440" height="837" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.35407725" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.35407725" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -625,7 +625,7 @@
       <window_info anchor="bottom" id="Docker" order="7" weight="0.32963988" />
       <window_info anchor="bottom" id="Database Changes" order="8" weight="0.32963988" />
       <window_info anchor="bottom" id="Version Control" order="9" weight="0.32963988" />
-      <window_info anchor="bottom" id="Terminal" order="10" visible="true" weight="0.36842105" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="10" visible="true" weight="0.36842105" />
       <window_info anchor="bottom" id="Event Log" order="11" side_tool="true" />
       <window_info anchor="bottom" id="Database Console" order="12" weight="0.32963988" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
@@ -1107,8 +1107,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/database/db.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="268">
-          <caret line="28" lean-forward="true" selection-start-line="28" selection-end-line="28" />
+        <state relative-caret-position="155">
+          <caret line="16" lean-forward="true" selection-start-line="16" selection-end-line="16" />
           <folding>
             <element signature="e#18#170#0" expanded="true" />
           </folding>
