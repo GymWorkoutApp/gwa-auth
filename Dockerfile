@@ -13,7 +13,6 @@ RUN apk add --update --no-cache \
     cp /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime && \
     echo "America/Sao_Paulo" > /etc/timezone && \
     glide install && \
-    glide up && \
     CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gwa_auth .
 
 # Final image

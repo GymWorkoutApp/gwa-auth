@@ -16,8 +16,6 @@ do
     export ${DOTENV_VAR}
 done
 
-cloud_sql_proxy -instances=gym-app-gd:us-central1:gwa-db-hml=tcp:5432 \ -credential_file=proxy.json
-
 echo -ne "Running...\n"
 echo -ne "-----------------------------------\n\n"
 
