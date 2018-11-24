@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="aa4814ad-7944-462c-92d3-283f0d17d97c" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/db.go" beforeDir="false" afterPath="$PROJECT_DIR$/database/db.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/glide.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/glide.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environments/hml.env" beforeDir="false" afterPath="$PROJECT_DIR$/environments/hml.env" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -292,11 +290,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/environments/hml.env">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="90">
-              <caret line="6" column="44" selection-start-line="6" selection-start-column="12" selection-end-line="6" selection-end-column="44" />
+            <state relative-caret-position="45">
+              <caret line="3" column="17" selection-start-line="3" selection-start-column="17" selection-end-line="3" selection-end-column="17" />
             </state>
           </provider>
         </entry>
@@ -337,11 +335,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/database/db.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="223">
-              <caret line="15" column="45" selection-start-line="15" selection-start-column="45" selection-end-line="15" selection-end-column="45" />
+            <state relative-caret-position="238">
+              <caret line="16" column="33" lean-forward="true" selection-start-line="16" selection-start-column="33" selection-end-line="16" selection-end-column="33" />
               <folding>
                 <element signature="e#18#170#0" expanded="true" />
               </folding>
@@ -454,7 +452,6 @@
         <option value="$PROJECT_DIR$/models/client.go" />
         <option value="$PROJECT_DIR$/environments/prd.env" />
         <option value="$PROJECT_DIR$/docker-compose.yml" />
-        <option value="$PROJECT_DIR$/environments/hml.env" />
         <option value="$PROJECT_DIR$/store/client.go" />
         <option value="$PROJECT_DIR$/store/store.go" />
         <option value="$PROJECT_DIR$/store/user.go" />
@@ -470,6 +467,7 @@
         <option value="$PROJECT_DIR$/Dockerfile" />
         <option value="$PROJECT_DIR$/glide.yaml" />
         <option value="$PROJECT_DIR$/database/db.go" />
+        <option value="$PROJECT_DIR$/environments/hml.env" />
       </list>
     </option>
   </component>
@@ -523,6 +521,11 @@
               <item name="gwa_auth" type="b2602c69:ProjectViewProjectNode" />
               <item name="gwa_auth" type="462c0819:PsiDirectoryNode" />
               <item name="database" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="gwa_auth" type="b2602c69:ProjectViewProjectNode" />
+              <item name="gwa_auth" type="462c0819:PsiDirectoryNode" />
+              <item name="environments" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="gwa_auth" type="b2602c69:ProjectViewProjectNode" />
@@ -609,7 +612,7 @@
     <frame x="0" y="23" width="1440" height="837" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.35407725" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.35407725" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -622,7 +625,7 @@
       <window_info anchor="bottom" id="Docker" order="7" weight="0.32963988" />
       <window_info anchor="bottom" id="Database Changes" order="8" weight="0.32963988" />
       <window_info anchor="bottom" id="Version Control" order="9" weight="0.32963988" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="10" visible="true" weight="0.36842105" />
+      <window_info anchor="bottom" id="Terminal" order="10" visible="true" weight="0.36842105" />
       <window_info anchor="bottom" id="Event Log" order="11" side_tool="true" />
       <window_info anchor="bottom" id="Database Console" order="12" weight="0.32963988" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
@@ -1088,13 +1091,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/environments/hml.env">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
-          <caret line="6" column="44" selection-start-line="6" selection-start-column="12" selection-end-line="6" selection-end-column="44" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/glide.yaml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="255">
@@ -1104,11 +1100,18 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/database/db.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="223">
-          <caret line="15" column="45" selection-start-line="15" selection-start-column="45" selection-end-line="15" selection-end-column="45" />
+        <state relative-caret-position="238">
+          <caret line="16" column="33" lean-forward="true" selection-start-line="16" selection-start-column="33" selection-end-line="16" selection-end-column="33" />
           <folding>
             <element signature="e#18#170#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/environments/hml.env">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="45">
+          <caret line="3" column="17" selection-start-line="3" selection-start-column="17" selection-end-line="3" selection-end-column="17" />
         </state>
       </provider>
     </entry>
