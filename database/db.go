@@ -3,29 +3,18 @@ package database
 import (
 	"context"
 	"fmt"
-	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/jinzhu/gorm"
+	_ "github.com/lib/pq"
 	"go.elastic.co/apm/module/apmgorm"
 	"os"
 )
 
 func NewManageDB() *ManageDB {
-	config := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"), os.Getenv("DB_SSLMODE"))
-	db, err := apmgorm.Open("cloudsqlpostgres", config)
-	//db = apmgorm.WithContext(ctx, db)
-	if err != nil {
-		fmt.Println(config)
-		panic(fmt.Sprintf("%s", err))
-	}
-	return &ManageDB{
-		db: db,
-	}
+	return &ManageDB{}
 }
 
 type ManageDB struct {
-	db  *gorm.DB
+
 }
 
 func (cs *ManageDB) Get(con context.Context) *gorm.DB {
