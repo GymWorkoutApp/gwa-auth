@@ -14,5 +14,3 @@ import:
   - '...'
 - package: github.com/smartystreets/goconvey
   vcs: git
-- package: github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres
-  vcs: git

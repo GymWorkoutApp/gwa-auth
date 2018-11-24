@@ -24,6 +24,7 @@ func (cs *ManageDB) Get(con context.Context) *gorm.DB {
 	db, err := apmgorm.Open("postgres", config)
 	db = apmgorm.WithContext(con, db)
 	if err != nil {
+		fmt.Println(config)
 		panic(err)
 	}
 
