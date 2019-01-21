@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/GymWorkoutApp/gwa_auth/utils/uuid"
+	"github.com/GymWorkoutApp/gwap-auth/utils/uuid"
 	"github.com/jinzhu/gorm"
 )
 

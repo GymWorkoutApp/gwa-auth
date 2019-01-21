@@ -1,52 +1,41 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"github.com/GymWorkoutApp/gwa_auth/database"
-	"github.com/GymWorkoutApp/gwa_auth/models"
-	"github.com/GymWorkoutApp/gwa_auth/store"
+	"github.com/GymWorkoutApp/gwap-auth/errors"
+	"github.com/GymWorkoutApp/gwap-auth/generates"
+	"github.com/GymWorkoutApp/gwap-auth/manager"
+	"github.com/GymWorkoutApp/gwap-auth/server"
+	"github.com/GymWorkoutApp/gwap-auth/store"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	echolog "github.com/labstack/gommon/log"
 	"go.elastic.co/apm/module/apmecho"
 	"log"
 	"os"
-
-	"github.com/GymWorkoutApp/gwa_auth/errors"
-	"github.com/GymWorkoutApp/gwa_auth/generates"
-	"github.com/GymWorkoutApp/gwa_auth/manager"
-	"github.com/GymWorkoutApp/gwa_auth/server"
-	"github.com/labstack/echo"
 )
 
 func main() {
 
 	managerServer := manager.NewDefaultManager()
-	managerServer.MapAccessGenerate(generates.NewJWTAccessGenerate([]byte("00000000"), jwt.SigningMethodHS512))
+	managerServer.MapAccessGenerate(generates.NewJWTAccessGenerate([]byte(os.Getenv("TOKEN_KEY")), jwt.SigningMethodHS512))
 
 	// token memory store
 	managerServer.MapTokenStorage(store.NewRedisStore())
+	managerServer.MapClientStorage(store.NewClientStore())
+	managerServer.MapUserStorage(store.NewUserStore())
 
 	srv := server.NewDefaultServer(managerServer)
 
-	db := database.NewManageDB().Get(context.TODO())
-	defer db.Close()
-	db.AutoMigrate(&models.Client{}, &models.User{})
-
-	// client store
-	managerServer.MapClientStorage(store.NewClientStore())
-
-	srv.SetClientInfoHandler(server.ClientFormHandler)
-
 	srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {
 		log.Println("Internal Error:", err.Error())
-		re = &errors.Response{Error: err, StatusCode: 500, Description: err.Error()}
+		re = &errors.Response{Internal: err, StatusCode: 500, Message: err.Error()}
 		return
 	})
 
 	srv.SetResponseErrorHandler(func(re *errors.Response) {
-		log.Println("Response Error:", re.Error.Error())
+		log.Println("Response Error:", re.Internal.Error())
 	})
 
 	// Http handlers
@@ -54,7 +43,7 @@ func main() {
 	e := echo.New()
 	e.Use(apmecho.Middleware())
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: "${time_rfc3339_nano} - [${uri} - ${method}] - ${status} - ${remote_ip}\n",
+		Format: "${time_rfc3339_nano} - [${uri} - ${method}] - ${status} - [${remote_ip}]\n",
 	}))
 
 	oauth2 := e.Group("oauth2")

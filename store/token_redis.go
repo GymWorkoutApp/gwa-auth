@@ -1,9 +1,9 @@
 package store
 
 import (
-	"github.com/GymWorkoutApp/gwa_auth/cache"
-	"github.com/GymWorkoutApp/gwa_auth/models"
-	"github.com/GymWorkoutApp/gwa_auth/utils/uuid"
+	"github.com/GymWorkoutApp/gwap-auth/cache"
+	"github.com/GymWorkoutApp/gwap-auth/models"
+	"github.com/GymWorkoutApp/gwap-auth/utils/uuid"
 	"time"
 
 	"github.com/go-redis/redis"

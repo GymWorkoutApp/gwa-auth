@@ -1,67 +1,150 @@
-
 package store
 
 import (
-"encoding/json"
-"fmt"
-"github.com/GymWorkoutApp/gwa_auth/cache"
-"github.com/GymWorkoutApp/gwa_auth/database"
-"github.com/GymWorkoutApp/gwa_auth/models"
-"github.com/go-redis/redis"
+	"encoding/json"
+	"fmt"
+	"github.com/GymWorkoutApp/gwap-auth/cache"
+	"github.com/GymWorkoutApp/gwap-auth/database"
+	"github.com/GymWorkoutApp/gwap-auth/models"
+	"github.com/GymWorkoutApp/gwap-auth/utils"
+	"github.com/go-redis/redis"
 	"github.com/labstack/echo"
+	"os"
 	"time"
 )
 
-// NewClientStore create user store
+// NewUserStore create client store
 func NewUserStore() UserStore {
-	user := &UserStoreStandard{
+	userStr := &UserStoreStandard{
 		redisClient: *cache.GetRedisClient(),
 	}
-	pong, err := user.redisClient.Ping().Result()
+	pong, err := userStr.redisClient.Ping().Result()
 	if err != nil {
+		fmt.Println(err)
 		panic(err)
 	} else {
-		fmt.Println(pong)
+		fmt.Println("Redis online on " + os.Getenv("REDIS_HOST") + " - " + pong)
 	}
 
-	return user
+	return userStr
 }
 
-// ClientStore user information store
+// UserStore client information store
 type UserStoreStandard struct {
 	redisClient redis.Client
 }
 
-// GetByID according to the ID for the user information
+// GetByID according to the ID for the client information
 func (cs *UserStoreStandard) GetByID(id string, e echo.Context) (models.UserInfo, error) {
-	result := cs.redisClient.Get(id)
-	if result != nil {
-		user := models.User{}
+	result := cs.redisClient.HGet(id, "user-info")
+	if result.Val() != "" {
+		client := models.User{}
 		b, err := result.Bytes()
 		if err != nil {
 			return nil, err
 		}
-		if err = json.Unmarshal(b, &user); err != nil {
+		if err = json.Unmarshal(b, &client); err != nil {
 			return nil, err
 		}
+		return client, nil
 	}
 
 	db := database.NewManageDB().Get(e.Request().Context())
 	defer db.Close()
-	user := models.User{}
-	db.Where("id = ?", id).First(&user)
+	client := models.User{}
+	db.Where("id = ?", id).First(&client)
 
-	userJson, err := jsonMarshal(user)
+	clientJson, err := jsonMarshal(client)
 	if err != nil {
 		return nil, err
 	}
 
-	cs.redisClient.Set(id, userJson, time.Duration(60 * 60))
+	cs.redisClient.HSet(id, "user-info", clientJson)
+	cs.redisClient.Expire(id, time.Hour)
 
-	return user, nil
+	return client, nil
 }
 
-// GetByID according to the ID for the user information
+// GetByID according to the ID for the client information
+func (cs *UserStoreStandard) GetByUsername(username string, e echo.Context) (models.UserInfo, error) {
+	result := cs.redisClient.HGet(username, "user-info")
+	if result.Val() != "" {
+		client := models.User{}
+		b, err := result.Bytes()
+		if err != nil {
+			return nil, err
+		}
+		if err = json.Unmarshal(b, &client); err != nil {
+			return nil, err
+		}
+		return client, nil
+	}
+
+	db := database.NewManageDB().Get(e.Request().Context())
+	defer db.Close()
+	client := models.User{}
+	db.Where("username = ?", username).First(&client)
+
+	clientJson, err := jsonMarshal(client)
+	if err != nil {
+		return nil, err
+	}
+
+	cs.redisClient.HSet(username, "user-info", clientJson)
+	cs.redisClient.Expire(username, time.Hour)
+
+	return client, nil
+}
+
+// GetByID according to the ID for the client information
+func (cs *UserStoreStandard) Get(user models.UserInfo, e echo.Context) ([]models.UserInfo, error) {
+	clientJson, err := json.Marshal(user)
+	if err != nil {
+		return nil, err
+	}
+
+	key := utils.Hash(clientJson)
+	users := make([]models.User, 0)
+	result := cs.redisClient.HGet(key, "user-info")
+	if result.Val() != "" {
+		b, err := result.Bytes()
+		if err != nil {
+			return nil, err
+		}
+		if err = json.Unmarshal(b, &users); err != nil {
+			return nil, err
+		}
+	} else {
+		db := database.NewManageDB().Get(e.Request().Context())
+		defer db.Close()
+
+		if user.GetID() != "" {
+			db = db.Where("id = ?", user.GetID())
+		}
+
+		if user.GetName() != "" {
+			db = db.Where("domain = ?", user.GetName())
+		}
+
+		db.Find(&users)
+
+		usersJson, err := jsonMarshal(users)
+		if err != nil {
+			panic(err)
+		}
+
+		cs.redisClient.HSet(key, "user-info", usersJson)
+	}
+
+	usersInfo := make([]models.UserInfo, len(users))
+	for i, c := range users {
+		usersInfo[i] = c
+	}
+
+	return usersInfo, nil
+}
+
+// GetByID according to the ID for the client information
 func (cs *UserStoreStandard) RemoveByID(id string, e echo.Context) (error) {
 	db := database.NewManageDB().Get(e.Request().Context())
 	defer db.Close()
@@ -72,7 +155,7 @@ func (cs *UserStoreStandard) RemoveByID(id string, e echo.Context) (error) {
 	return err
 }
 
-// Set set user information
+// Set set client information
 func (cs *UserStoreStandard) Create(user models.UserInfo, e echo.Context) (models.UserInfo,  error) {
 	db := database.NewManageDB().Get(e.Request().Context())
 	defer db.Close()
@@ -82,12 +165,12 @@ func (cs *UserStoreStandard) Create(user models.UserInfo, e echo.Context) (model
 		if err != nil {
 			return nil, err
 		}
-		cs.redisClient.Set(user.GetID(), userJson, time.Duration(60 * 60))
+		cs.redisClient.HSet(user.GetID(), "user-info", userJson)
 	}
 	return user, err
 }
 
-// Set set user information
+// Set set client information
 func (cs *UserStoreStandard) Update(user models.UserInfo, e echo.Context) (models.UserInfo, error) {
 	db := database.NewManageDB().Get(e.Request().Context())
 	defer db.Close()
@@ -97,7 +180,7 @@ func (cs *UserStoreStandard) Update(user models.UserInfo, e echo.Context) (model
 		if err != nil {
 			return nil, err
 		}
-		cs.redisClient.Set(user.GetID(), userJson, time.Duration(60 * 60))
+		cs.redisClient.HSet(user.GetID(), "user-info", userJson)
 	}
 	return user, err
 }

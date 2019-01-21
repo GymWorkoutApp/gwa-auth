@@ -2,11 +2,12 @@ package store
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/GymWorkoutApp/gwa_auth/cache"
-	"github.com/GymWorkoutApp/gwa_auth/database"
-	"github.com/GymWorkoutApp/gwa_auth/models"
-	"github.com/GymWorkoutApp/gwa_auth/utils"
+	"github.com/GymWorkoutApp/gwap-auth/cache"
+	"github.com/GymWorkoutApp/gwap-auth/database"
+	"github.com/GymWorkoutApp/gwap-auth/models"
+	"github.com/GymWorkoutApp/gwap-auth/utils"
 	"github.com/go-redis/redis"
 	"github.com/labstack/echo"
 	"os"
@@ -53,6 +54,10 @@ func (cs *ClientStoreStandard) GetByID(id string, e echo.Context) (models.Client
 	defer db.Close()
 	client := models.Client{}
 	db.Where("id = ?", id).First(&client)
+
+	if client.ID == "" {
+		return nil, errors.New("ClientId not found!")
+	}
 
 	clientJson, err := jsonMarshal(client)
 	if err != nil {

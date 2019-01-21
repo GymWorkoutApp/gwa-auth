@@ -1,9 +1,9 @@
 package server
 
 import (
-	"github.com/GymWorkoutApp/gwa_auth/constants"
-	"github.com/GymWorkoutApp/gwa_auth/errors"
-	"github.com/GymWorkoutApp/gwa_auth/models"
+	"github.com/GymWorkoutApp/gwap-auth/constants"
+	"github.com/GymWorkoutApp/gwap-auth/errors"
+	"github.com/GymWorkoutApp/gwap-auth/models"
 	"net/http"
 	"time"
 )
@@ -17,6 +17,9 @@ type (
 
 	// ClientScopeHandler check the client allows to use" scope
 	ClientScopeHandler func(clientID, scope string) (allowed bool, err error)
+
+	// UserInfoHandler get user info from request
+	UserInfoHandler func(r *http.Request) (username string, password string, err error)
 
 	// UserAuthorizationHandler get user id from request authorization
 	UserAuthorizationHandler func(w http.ResponseWriter, r *http.Request) (userID string, err error)
@@ -55,12 +58,11 @@ func ClientFormHandler(r *http.Request) (clientID, clientSecret string, err erro
 
 // ClientBasicHandler get client data from basic authorization
 func ClientBasicHandler(r *http.Request) (clientID, clientSecret string, err error) {
-	username, password, ok := r.BasicAuth()
+	clientID, clientSecret, ok := r.BasicAuth()
 	if !ok {
 		err = errors.ErrInvalidClient
 		return
 	}
-	clientID = username
-	clientSecret = password
 	return
 }
+

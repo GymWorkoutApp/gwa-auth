@@ -2,8 +2,8 @@ package generates
 
 import (
 	"encoding/base64"
-	"github.com/GymWorkoutApp/gwa_auth/errors"
-	"github.com/GymWorkoutApp/gwa_auth/utils/uuid"
+	"github.com/GymWorkoutApp/gwap-auth/errors"
+	"github.com/GymWorkoutApp/gwap-auth/utils/uuid"
 	"strings"
 	"time"
 
@@ -26,7 +26,7 @@ func (a *JWTAccessClaims) Valid() error {
 }
 
 // NewJWTAccessGenerate create to generate the jwt access token instance
-func NewJWTAccessGenerate(key []byte, method jwt.SigningMethod) *JWTAccessGenerate {
+func NewJWTAccessGenerate(key interface{}, method jwt.SigningMethod) *JWTAccessGenerate {
 	return &JWTAccessGenerate{
 		SignedKey:    key,
 		SignedMethod: method,
@@ -35,7 +35,7 @@ func NewJWTAccessGenerate(key []byte, method jwt.SigningMethod) *JWTAccessGenera
 
 // JWTAccessGenerate generate the jwt access token
 type JWTAccessGenerate struct {
-	SignedKey    []byte
+	SignedKey    interface{}
 	SignedMethod jwt.SigningMethod
 }
 

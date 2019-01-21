@@ -1,7 +1,7 @@
 package generates
 
 import (
-	"github.com/GymWorkoutApp/gwa_auth/models"
+	"github.com/GymWorkoutApp/gwap-auth/models"
 	"net/http"
 	"time"
 )

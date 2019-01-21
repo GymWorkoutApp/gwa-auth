@@ -1,11 +1,11 @@
 package manager
 
 import (
-	"github.com/GymWorkoutApp/gwa_auth/constants"
-	"github.com/GymWorkoutApp/gwa_auth/errors"
-	"github.com/GymWorkoutApp/gwa_auth/generates"
-	"github.com/GymWorkoutApp/gwa_auth/models"
-	"github.com/GymWorkoutApp/gwa_auth/store"
+	"github.com/GymWorkoutApp/gwap-auth/constants"
+	"github.com/GymWorkoutApp/gwap-auth/errors"
+	"github.com/GymWorkoutApp/gwap-auth/generates"
+	"github.com/GymWorkoutApp/gwap-auth/models"
+	"github.com/GymWorkoutApp/gwap-auth/store"
 	"github.com/labstack/echo"
 	"time"
 )
@@ -108,6 +108,11 @@ func (m *ManagerStandard) MapClientStorage(stor store.ClientStore) {
 	m.clientStore = stor
 }
 
+// MapClientStorage mapping the client store interface
+func (m *ManagerStandard) MapUserStorage(stor store.UserStore) {
+	m.userStore = stor
+}
+
 // MustClientStorage mandatory mapping the client store interface
 func (m *ManagerStandard) MustClientStorage(stor store.ClientStore, err error) {
 	if err != nil {
@@ -162,7 +167,7 @@ func (m *ManagerStandard) UpdateClient(cli models.ClientInfo, e echo.Context) (m
 }
 
 // GetClientById get the client information
-func (m *ManagerStandard) GetUser(userID string, e echo.Context) (user models.UserInfo, err error) {
+func (m *ManagerStandard) GetUserByID(userID string, e echo.Context) (user models.UserInfo, err error) {
 	user, err = m.userStore.GetByID(userID, e)
 	if err != nil {
 		return
@@ -170,6 +175,28 @@ func (m *ManagerStandard) GetUser(userID string, e echo.Context) (user models.Us
 		err = errors.ErrInvalidClient
 	}
 	return
+}
+
+// GetClientById get the client information
+func (m *ManagerStandard) GetUserByUsername(username string, e echo.Context) (user models.UserInfo, err error) {
+	user, err = m.userStore.GetByUsername(username, e)
+	if err != nil {
+		return
+	} else if user == nil {
+		err = errors.ErrAccessDenied
+	}
+	return
+}
+
+// GetClientById get the client information
+func (m *ManagerStandard) GetUser(user models.UserInfo, e echo.Context) ([]models.UserInfo, error) {
+	users, err := m.userStore.Get(user, e)
+	if err != nil {
+		return nil, err
+	} else if user == nil {
+		err = errors.ErrInvalidClient
+	}
+	return users, err
 }
 
 // CreateClient get the client information

@@ -2,9 +2,9 @@ package server
 
 import (
 	"fmt"
-	"github.com/GymWorkoutApp/gwa_auth/errors"
-	"github.com/GymWorkoutApp/gwa_auth/models"
-	"github.com/GymWorkoutApp/gwa_auth/store"
+	"github.com/GymWorkoutApp/gwap-auth/errors"
+	"github.com/GymWorkoutApp/gwap-auth/models"
+	"github.com/GymWorkoutApp/gwap-auth/store"
 	"net/http"
 	"net/http/httptest"
 	"net/url"

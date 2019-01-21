@@ -2,24 +2,25 @@ package errors
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 )
 
 // Response error response
 type Response struct {
-	Error       error
-	ErrorCode   int
-	Description string
-	URI         string
-	StatusCode  int
-	Header      http.Header
+	URI         string      `json:"-"`
+	StatusCode  int         `json:"-"`
+	Header      http.Header `json:"-"`
+	Message  	interface{} `json:"message"`
+	Internal 	error       `json:"-"`
 }
 
 // NewResponse create the response pointer
-func NewResponse(err error, statusCode int) *Response {
+func NewResponse(err error, statusCode int, message string) *Response {
 	return &Response{
-		Error:      err,
+		Internal:      err,
 		StatusCode: statusCode,
+		Message: message,
 	}
 }
 
@@ -30,6 +31,15 @@ func (r *Response) SetHeader(key, value string) {
 		r.Header = make(http.Header)
 	}
 	r.Header.Set(key, value)
+}
+
+func (he *Response) Error() string {
+	return fmt.Sprintf("code=%d, message=%v", he.StatusCode, he.Message)
+}
+
+func (he *Response) SetInternal(err error) *Response {
+	he.Internal = err
+	return he
 }
 
 // https://tools.ietf.org/html/rfc6749#section-5.2

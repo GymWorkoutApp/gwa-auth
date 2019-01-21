@@ -1,7 +1,7 @@
 package manager
 
 import (
-	"github.com/GymWorkoutApp/gwa_auth/errors"
+	"github.com/GymWorkoutApp/gwap-auth/errors"
 	"net/url"
 	"strings"
 

@@ -18,6 +18,8 @@ type (
 	UserInfo interface {
 		GetID() string
 		SetID(string)
+		GetUsername() string
+		SetUsername(string)
 		GetPassword() string
 		SetPassword(string)
 		GetName() string

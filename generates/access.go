@@ -3,7 +3,7 @@ package generates
 import (
 	"bytes"
 	"encoding/base64"
-	"github.com/GymWorkoutApp/gwa_auth/utils/uuid"
+	"github.com/GymWorkoutApp/gwap-auth/utils/uuid"
 	"strconv"
 	"strings"
 )

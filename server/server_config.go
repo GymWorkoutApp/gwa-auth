@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/GymWorkoutApp/gwa_auth/constants"
+	"github.com/GymWorkoutApp/gwap-auth/constants"
 )
 
 // SetTokenType token type
@@ -34,14 +34,9 @@ func (s *Server) SetClientScopeHandler(handler ClientScopeHandler) {
 	s.ClientScopeHandler = handler
 }
 
-// SetUserAuthorizationHandler get user id from request authorization
-func (s *Server) SetUserAuthorizationHandler(handler UserAuthorizationHandler) {
-	s.UserAuthorizationHandler = handler
-}
-
-// SetPasswordAuthorizationHandler get user id from username and password
-func (s *Server) SetPasswordAuthorizationHandler(handler PasswordAuthorizationHandler) {
-	s.PasswordAuthorizationHandler = handler
+// SetUserInfoHandler get client info from request
+func (s *Server) SetUserInfoHandler(handler UserInfoHandler) {
+	s.UserInfoHandler = handler
 }
 
 // SetRefreshingScopeHandler check the scope of the refreshing token

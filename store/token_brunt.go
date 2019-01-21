@@ -2,8 +2,8 @@ package store
 
 import (
 	"encoding/json"
-	"github.com/GymWorkoutApp/gwa_auth/models"
-	"github.com/GymWorkoutApp/gwa_auth/utils/uuid"
+	"github.com/GymWorkoutApp/gwap-auth/models"
+	"github.com/GymWorkoutApp/gwap-auth/utils/uuid"
 	"time"
 
 	"github.com/tidwall/buntdb"

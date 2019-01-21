@@ -1,8 +1,8 @@
 package manager
 
 import (
-	"github.com/GymWorkoutApp/gwa_auth/constants"
-	"github.com/GymWorkoutApp/gwa_auth/models"
+	"github.com/GymWorkoutApp/gwap-auth/constants"
+	"github.com/GymWorkoutApp/gwap-auth/models"
 	"github.com/labstack/echo"
 	"net/http"
 	"time"
@@ -35,8 +35,14 @@ type Manager interface {
 	// update the client information
 	UpdateClient(cli models.ClientInfo, e echo.Context) (models.ClientInfo, error)
 
-	// get the client information
-	GetUser(userID string, e echo.Context) (cli models.UserInfo, err error)
+	// get the user information
+	GetUserByID(userID string, e echo.Context) (models.UserInfo, error)
+
+	// get the user information
+	GetUser(user models.UserInfo, e echo.Context) ([]models.UserInfo, error)
+
+	// get the user information
+	GetUserByUsername(username string, e echo.Context) (models.UserInfo, error)
 
 	// create the client information
 	CreateUser(user models.UserInfo, e echo.Context) (models.UserInfo, error)

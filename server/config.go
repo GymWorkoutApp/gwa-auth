@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/GymWorkoutApp/gwa_auth/constants"
+	"github.com/GymWorkoutApp/gwap-auth/constants"
 	"net/http"
 	"time"
 )

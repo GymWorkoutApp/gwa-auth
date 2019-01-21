@@ -1,7 +1,7 @@
 package store
 
 import (
-	"github.com/GymWorkoutApp/gwa_auth/models"
+	"github.com/GymWorkoutApp/gwap-auth/models"
 	"github.com/labstack/echo"
 )
 
@@ -20,8 +20,10 @@ type (
 	UserStore interface {
 		// according to the ID for the client information
 		GetByID(id string, e echo.Context) (models.UserInfo, error)
-		Create(cli models.UserInfo, e echo.Context) (models.UserInfo, error)
-		Update(cli models.UserInfo, e echo.Context) (models.UserInfo, error)
+		GetByUsername(username string, e echo.Context) (models.UserInfo, error)
+		Get(user models.UserInfo, e echo.Context) ([]models.UserInfo, error)
+		Create(user models.UserInfo, e echo.Context) (models.UserInfo, error)
+		Update(user models.UserInfo, e echo.Context) (models.UserInfo, error)
 		RemoveByID(id string, e echo.Context) (error)
 	}
 

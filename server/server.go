@@ -1,12 +1,12 @@
 package server
 
 import (
-	"encoding/json"
+	errors2 "errors"
 	"fmt"
-	"github.com/GymWorkoutApp/gwa_auth/constants"
-	"github.com/GymWorkoutApp/gwa_auth/errors"
-	"github.com/GymWorkoutApp/gwa_auth/manager"
-	"github.com/GymWorkoutApp/gwa_auth/models"
+	"github.com/GymWorkoutApp/gwap-auth/constants"
+	"github.com/GymWorkoutApp/gwap-auth/errors"
+	"github.com/GymWorkoutApp/gwap-auth/manager"
+	"github.com/GymWorkoutApp/gwap-auth/models"
 	"github.com/labstack/echo"
 	"net/http"
 	"net/url"
@@ -27,35 +27,24 @@ func NewServer(cfg *Config, manager manager.Manager) *Server {
 	}
 
 	// default handlers
-	srv.ClientInfoHandler = ClientBasicHandler
-
-	srv.UserAuthorizationHandler = func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
-		err = errors.ErrAccessDenied
-		return
-	}
-
-	srv.PasswordAuthorizationHandler = func(username, password string) (userID string, err error) {
-		err = errors.ErrAccessDenied
-		return
-	}
+	srv.ClientInfoHandler = ClientFormHandler
 	return srv
 }
 
 // Server Provide authorization server
 type Server struct {
-	Config                       *Config
-	Manager                      manager.Manager
-	ClientInfoHandler            ClientInfoHandler
-	ClientAuthorizedHandler      ClientAuthorizedHandler
-	ClientScopeHandler           ClientScopeHandler
-	UserAuthorizationHandler     UserAuthorizationHandler
-	PasswordAuthorizationHandler PasswordAuthorizationHandler
-	RefreshingScopeHandler       RefreshingScopeHandler
-	ResponseErrorHandler         ResponseErrorHandler
-	InternalErrorHandler         InternalErrorHandler
-	ExtensionFieldsHandler       ExtensionFieldsHandler
-	AccessTokenExpHandler        AccessTokenExpHandler
-	AuthorizeScopeHandler        AuthorizeScopeHandler
+	Config                  *Config
+	Manager                 manager.Manager
+	ClientInfoHandler       ClientInfoHandler
+	ClientAuthorizedHandler ClientAuthorizedHandler
+	ClientScopeHandler      ClientScopeHandler
+	UserInfoHandler         UserInfoHandler
+	RefreshingScopeHandler  RefreshingScopeHandler
+	ResponseErrorHandler    ResponseErrorHandler
+	InternalErrorHandler    InternalErrorHandler
+	ExtensionFieldsHandler  ExtensionFieldsHandler
+	AccessTokenExpHandler   AccessTokenExpHandler
+	AuthorizeScopeHandler   AuthorizeScopeHandler
 }
 
 func (s *Server) redirectError(w http.ResponseWriter, req *AuthorizeRequest, err error) (uerr error) {
@@ -63,7 +52,7 @@ func (s *Server) redirectError(w http.ResponseWriter, req *AuthorizeRequest, err
 		uerr = err
 		return
 	}
-	data, _, _ := s.GetErrorData(err)
+	data, _ := s.GetErrorData(err)
 	err = s.redirect(w, req, data)
 	return
 }
@@ -78,30 +67,22 @@ func (s *Server) redirect(w http.ResponseWriter, req *AuthorizeRequest, data map
 	return
 }
 
-func (s *Server) tokenError(w http.ResponseWriter, err error) (uerr error) {
-	data, statusCode, header := s.GetErrorData(err)
-
-	uerr = s.token(w, data, header, statusCode)
-	return
+func (s *Server) tokenError(err error) (map[string]interface{}, int, error) {
+	data, statusCode := s.GetErrorData(err)
+	return data, statusCode, nil
 }
 
-func (s *Server) token(w http.ResponseWriter, data map[string]interface{}, header http.Header, statusCode ...int) (err error) {
-	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-	w.Header().Set("Cache-Control", "no-store")
-	w.Header().Set("Pragma", "no-cache")
-
-	for key := range header {
-		w.Header().Set(key, header.Get(key))
-	}
+func (s *Server) token(data map[string]interface{}, statusCode ...int) (map[string]interface{}, int, error) {
+	//for key := range header {
+	//	w.Header().Set(key, header.Get(key))
+	//}
 
 	status := http.StatusOK
 	if len(statusCode) > 0 && statusCode[0] > 0 {
 		status = statusCode[0]
 	}
 
-	w.WriteHeader(status)
-	err = json.NewEncoder(w).Encode(data)
-	return
+	return data, status, nil
 }
 
 // GetRedirectURI get redirect uri
@@ -247,7 +228,7 @@ func (s *Server) HandleAuthorizeRequest(c echo.Context) (err error) {
 	}
 
 	// user authorization
-	userID, verr := s.UserAuthorizationHandler(r, c.Request())
+	userID, verr := s.UserAuthorizationHandler(c)
 
 	if verr != nil {
 		err = s.redirectError(r, req, verr)
@@ -292,7 +273,7 @@ func (s *Server) HandleAuthorizeRequest(c echo.Context) (err error) {
 }
 
 // ValidationTokenRequest the token request validation
-func (s *Server) ValidationTokenRequest(r *http.Request) (gt constants.GrantType, tgr *manager.TokenGenerateRequest, err error) {
+func (s *Server) ValidationTokenRequest(r *http.Request, e echo.Context) (gt constants.GrantType, tgr *manager.TokenGenerateRequest, err error) {
 	if v := r.Method; v != "POST" {
 		err = errors.ErrInvalidRequest
 		return
@@ -335,7 +316,7 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (gt constants.GrantType
 			return
 		}
 
-		userID, verr := s.PasswordAuthorizationHandler(username, password)
+		userID, verr := s.PasswordAuthorizationHandler(username, password, e)
 		if verr != nil {
 			err = verr
 			return
@@ -482,40 +463,56 @@ func (s *Server) GetTokenData(ti models.TokenInfo) (data map[string]interface{})
 }
 
 // HandleTokenRequest token request handling
-func (s *Server) HandleTokenRequest(c echo.Context) (error) {
+func (s *Server) HandleTokenRequest(c echo.Context) error {
 	r := c.Request()
-	w := c.Response()
-	gt, tgr, verr := s.ValidationTokenRequest(r)
+	gt, tgr, verr := s.ValidationTokenRequest(r, c)
 	if verr != nil {
-		return s.tokenError(c.Response(), verr)
+		data, status, err := s.tokenError(verr)
+		if err != nil {
+			return err
+		}
+		return c.JSON(status, data)
 	}
 
 	ti, verr := s.GetAccessToken(gt, tgr, c)
 	if verr != nil {
-		return s.tokenError(w, verr)
+		data, status, err := s.tokenError(verr)
+		if err != nil {
+			return err
+		}
+		return c.JSON(status, data)
 	}
 
-	return s.token(w, s.GetTokenData(ti), nil)
+	data, status, err := s.token(s.GetTokenData(ti), http.StatusOK)
+	if err != nil {
+		return err
+	}
+	return c.JSON(status, data)
 }
 
 // HandleIntrospectRequest introspect request handling
-func (s *Server) HandleIntrospectRequest(e echo.Context) (err error) {
-	w := e.Response()
+func (s *Server) HandleIntrospectRequest(e echo.Context) error {
 	token := string(e.QueryParam("token"))
 
 	if token != "" {
 		info, err := s.Manager.LoadAccessToken(token)
 
 		if err != nil {
-			err = s.tokenError(w, err)
-			return err
+			data, status, err := s.tokenError( err)
+			if err != nil {
+				return err
+			}
+			return e.JSON(status, data)
 		}
 
-		err = s.token(w, s.GetTokenData(info), nil)
-		return err
+		data, status, err := s.token(s.GetTokenData(info), http.StatusOK)
+		if err != nil {
+			return err
+		}
+		return e.JSON(status, data)
 	} else {
-		http.Error(w, "Token is required", http.StatusBadRequest)
-		return
+		e.Error(errors.NewResponse(errors2.New("Token is required"), http.StatusBadRequest, ""))
+		return nil
 	}
 }
 
@@ -568,75 +565,69 @@ func (s *Server) HandleClientGetRequest(e echo.Context) (err error) {
 }
 
 // HandleUserCreateUpdateRequest introspect request handling
-func (s *Server) HandleUserCreateRequest(e echo.Context) (err error) {
-	w := e.Response()
+func (s *Server) HandleUserCreateRequest(e echo.Context) (error) {
 	token := string(e.QueryParam("token"))
 
 	if token != "" {
 		info, err := s.Manager.LoadAccessToken(token)
 
 		if err != nil {
-			err = s.tokenError(w, err)
-			return err
+			data, status, err := s.tokenError(err)
+			if err != nil {
+				return err
+			}
+			return e.JSON(status, data)
 		}
 
-		err = s.token(w, s.GetTokenData(info), nil)
-		return err
+		data, status, err := s.token(s.GetTokenData(info), http.StatusOK)
+		if err != nil {
+			return err
+		}
+		return e.JSON(status, data)
 	} else {
-		http.Error(w, "Token is required", http.StatusBadRequest)
-		return
+		e.Error(errors.NewResponse(errors2.New("Token is required"), http.StatusBadRequest, ""))
+		return nil
 	}
 }
 
 // HandleUserCreateUpdateRequest introspect request handling
-func (s *Server) HandleUserUpdateRequest(e echo.Context) (err error) {
-	w := e.Response()
+func (s *Server) HandleUserUpdateRequest(e echo.Context) error {
 	token := string(e.QueryParam("token"))
 
 	if token != "" {
 		info, err := s.Manager.LoadAccessToken(token)
 
 		if err != nil {
-			err = s.tokenError(w, err)
-			return err
+			data, status, err := s.tokenError(err)
+			if err != nil {
+				return nil
+			}
+			return e.JSON(status, data)
 		}
 
-		err = s.token(w, s.GetTokenData(info), nil)
-		return err
+		data, status, err := s.token(s.GetTokenData(info), http.StatusOK)
+		if err != nil {
+			return nil
+		}
+		return e.JSON(status, data)
 	} else {
-		http.Error(w, "Token is required", http.StatusBadRequest)
-		return
+		e.Error(errors.NewResponse(errors2.New("Token is required"), http.StatusBadRequest, ""))
+		return nil
 	}
 }
 
 // HandleUserGetRequest introspect request handling
-func (s *Server) HandleUserGetRequest(e echo.Context) (err error) {
-	w := e.Response()
-	token := string(e.QueryParam("token"))
-
-	if token != "" {
-		info, err := s.Manager.LoadAccessToken(token)
-
-		if err != nil {
-			err = s.tokenError(w, err)
-			return err
-		}
-
-		err = s.token(w, s.GetTokenData(info), nil)
-		return err
-	} else {
-		http.Error(w, "Token is required", http.StatusBadRequest)
-		return
-	}
+func (s *Server) HandleUserGetRequest(e echo.Context) (error) {
+	return nil
 }
 
 // GetErrorData get error response data
-func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCode int, header http.Header) {
+func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCode int) {
 	re := new(errors.Response)
 
 	if v, ok := errors.Descriptions[err]; ok {
-		re.Error = err
-		re.Description = v
+		re.Internal = err
+		re.Message = v
 		re.StatusCode = errors.StatusCodes[err]
 	} else {
 		if fn := s.InternalErrorHandler; fn != nil {
@@ -645,9 +636,9 @@ func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCod
 			}
 		}
 
-		if re.Error == nil {
-			re.Error = errors.ErrServerError
-			re.Description = errors.Descriptions[errors.ErrServerError]
+		if re.Internal == nil {
+			re.Internal = errors.ErrServerError
+			re.Message = errors.Descriptions[errors.ErrServerError]
 			re.StatusCode = errors.StatusCodes[errors.ErrServerError]
 		}
 	}
@@ -662,23 +653,21 @@ func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCod
 
 	data = make(map[string]interface{})
 
-	if err := re.Error; err != nil {
+	if err := re.Internal; err != nil {
 		data["error"] = err.Error()
 	}
 
-	if v := re.ErrorCode; v != 0 {
+	if v := re.StatusCode; v != 0 {
 		data["error_code"] = v
 	}
 
-	if v := re.Description; v != "" {
+	if v := re.Message; v != "" {
 		data["error_description"] = v
 	}
 
 	if v := re.URI; v != "" {
 		data["error_uri"] = v
 	}
-
-	header = re.Header
 
 	statusCode = http.StatusInternalServerError
 	if v := re.StatusCode; v > 0 {
@@ -720,7 +709,6 @@ func (s *Server) ValidationBearerToken(r *http.Request) (ti models.TokenInfo, er
 	return
 }
 
-
 // ValidationBearerToken validation the bearer tokens
 // https://tools.ietf.org/html/rfc6750
 func (s *Server) MiddlewareAuthClient(next echo.HandlerFunc) echo.HandlerFunc {
@@ -731,11 +719,37 @@ func (s *Server) MiddlewareAuthClient(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 		ti, err := s.Manager.LoadAccessToken(accessToken)
 		if err != nil {
-			err = s.tokenError(c.Response(), err)
-			return err
+			data, status, err := s.tokenError(err)
+			if err != nil {
+				return nil
+			}
+			c.JSON(status, data)
 		}
 
 		c.Set("UserID", ti.GetClientID())
 		return next(c)
 	}
+}
+
+func (s *Server) UserAuthorizationHandler(e echo.Context) (userID string, err error) {
+	username := e.QueryParam("username")
+	if username == "" {
+		err = errors.ErrAccessDenied
+	}
+
+	s.Manager.GetUser(&models.User{Username: username}, e)
+	return
+}
+
+func (s *Server) PasswordAuthorizationHandler(username string, password string, e echo.Context) (userID string, err error) {
+	users, err := s.Manager.GetUser(models.User{Username: username, Password: password}, e)
+	if err != nil {
+		return
+	}
+	if len(users) == 1 {
+		userID = users[0].GetID()
+	} else {
+		err = errors.ErrAccessDenied
+	}
+	return
 }

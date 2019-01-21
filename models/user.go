@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/GymWorkoutApp/gwa_auth/utils/uuid"
+	"github.com/GymWorkoutApp/gwap-auth/utils/uuid"
 	"github.com/jinzhu/gorm"
 )
 
@@ -9,6 +9,7 @@ import (
 type User struct {
 	Base
 	ID     		string `json:"id" gorm:"not null;primary_key;"`
+	Username 	string `json:"username" gorm:"not null;"`
 	Password 	string `json:"password" gorm:"not null;"`
 	Name 		string `json:"name" gorm:"not null;"`
 }
@@ -19,6 +20,14 @@ func (u User) GetID() string {
 
 func (u User) SetID(id string) {
 	u.ID = id
+}
+
+func (u User) GetUsername() string {
+	return u.Username
+}
+
+func (u User) SetUsername(username string) {
+	u.Username = username
 }
 
 func (u User) GetPassword() string {
