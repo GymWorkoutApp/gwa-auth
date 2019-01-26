@@ -1,0 +1,33 @@
+image: docker:stable
+
+variables:
+  DOCKER_IMAGE_TAG: 'gcr.io/gym-app-gd/gwap-auth'
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+
+services:
+  - docker:dind
+
+stages:
+  - prepare
+  - build
+  - deploy
+
+build:
+  stage: build
+  script:
+    - docker build --cache-from $DOCKER_IMAGE_TAG -t $DOCKER_IMAGE_TAG .
+    - docker login -u _json_key -p "$(cat key.json)" https://gcr.io
+    - docker push $DOCKER_IMAGE_TAG
+
+deploy:
+  image: google/cloud-sdk
+  stage: deploy
+  script:
+    - gcloud auth activate-service-account --key-file=key.json
+    - gcloud config set project gym-app-gd
+    - gcloud config set container/cluster gwap-cluster-hml
+    - gcloud config set compute/zone us-central1-a
+    - gcloud container clusters get-credentials gwap-cluster-hml --zone us-central1-a
+    - kubectl delete pods --all
+    - kubectl apply -f kubernetes/deployment.yml

@@ -1,0 +1,82 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gwap-auth
+  labels:
+    app: gwap-auth
+spec:
+  selector:
+    matchLabels:
+      app: gwap-auth
+      tier: web
+  template:
+    metadata:
+      labels:
+        app: gwap-auth
+        tier: web
+    spec:
+      containers:
+        - name: gwap-auth-app
+          image: gcr.io/gym-app-gd/gwap-auth:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            periodSeconds: 1
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 10
+          env:
+            - name: DB_HOST
+              value: 127.0.0.1:5432
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-db-credentials
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-db-credentials
+                  key: password
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.11
+          command: ["/cloud_sql_proxy",
+                    "-instances=gym-app-gd:us-central1:gwa-db-hml=tcp:5432",
+                    "-credential_file=/secrets/cloudsql/credentials.json"]
+          securityContext:
+            runAsUser: 2  # non-root user
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-instance-credentials
+
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "gwap-auth-load-balancer"
+  namespace: "default"
+  labels:
+    app: "gwap-auth"
+spec:
+  ports:
+    - protocol: "TCP"
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: "gwap-auth"
+    tier: "web"
+  type: "LoadBalancer"
+  loadBalancerIP: ""
+
+
