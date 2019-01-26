@@ -2,44 +2,38 @@ package errors
 
 import (
 	"errors"
-	"fmt"
-	"net/http"
+	validator2 "github.com/GymWorkoutApp/gwap-auth/validator"
+	"github.com/labstack/echo"
+	"gopkg.in/go-playground/validator.v9"
+	"strings"
 )
 
-// Response error response
-type Response struct {
-	URI         string      `json:"-"`
-	StatusCode  int         `json:"-"`
-	Header      http.Header `json:"-"`
-	Message  	interface{} `json:"message"`
-	Internal 	error       `json:"-"`
-}
-
 // NewResponse create the response pointer
-func NewResponse(err error, statusCode int, message string) *Response {
-	return &Response{
+func NewResponse(err error, statusCode int, message string) *echo.HTTPError {
+	return &echo.HTTPError{
 		Internal:      err,
-		StatusCode: statusCode,
+		Code: statusCode,
 		Message: message,
 	}
 }
 
-// SetHeader sets the header entries associated with key to
-// the single element value.
-func (r *Response) SetHeader(key, value string) {
-	if r.Header == nil {
-		r.Header = make(http.Header)
+// NewResponse create the response pointer
+func NewResponseByError(err error) *echo.HTTPError {
+
+	response := &echo.HTTPError{
+		Internal:      err,
 	}
-	r.Header.Set(key, value)
-}
 
-func (he *Response) Error() string {
-	return fmt.Sprintf("code=%d, message=%v", he.StatusCode, he.Message)
-}
+	switch err.(type) {
+	case validator.ValidationErrors:
+		response.Code = 422
+		response.Message = strings.Join(validator2.TranslateValidator(err), "\n")
+	default:
+		response.Code = StatusCodes[err]
+		response.Message = Descriptions[err]
+	}
 
-func (he *Response) SetInternal(err error) *Response {
-	he.Internal = err
-	return he
+	return response
 }
 
 // https://tools.ietf.org/html/rfc6749#section-5.2

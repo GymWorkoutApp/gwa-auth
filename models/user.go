@@ -9,9 +9,9 @@ import (
 type User struct {
 	Base
 	ID     		string `json:"id" gorm:"not null;primary_key;"`
-	Username 	string `json:"username" gorm:"not null;"`
-	Password 	string `json:"password" gorm:"not null;"`
-	Name 		string `json:"name" gorm:"not null;"`
+	Username 	string `json:"username" validate:"required" gorm:"not null;"`
+	Password 	string `json:"password" validate:"required" gorm:"not null;"`
+	Name 		string `json:"name" validate:"required" gorm:"not null;"`
 }
 
 func (u User) GetID() string {

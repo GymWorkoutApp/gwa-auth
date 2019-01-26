@@ -4,6 +4,7 @@ import (
 	"github.com/GymWorkoutApp/gwap-auth/constants"
 	"github.com/GymWorkoutApp/gwap-auth/errors"
 	"github.com/GymWorkoutApp/gwap-auth/models"
+	"github.com/labstack/echo"
 	"net/http"
 	"time"
 )
@@ -31,10 +32,10 @@ type (
 	RefreshingScopeHandler func(newScope, oldScope string) (allowed bool, err error)
 
 	// ResponseErrorHandler response error handing
-	ResponseErrorHandler func(re *errors.Response)
+	ResponseErrorHandler func(re *echo.HTTPError)
 
 	// InternalErrorHandler internal error handing
-	InternalErrorHandler func(err error) (re *errors.Response)
+	InternalErrorHandler func(err error) (re *echo.HTTPError)
 
 	// AuthorizeScopeHandler set the authorized scope
 	AuthorizeScopeHandler func(w http.ResponseWriter, r *http.Request) (scope string, err error)

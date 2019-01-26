@@ -565,29 +565,20 @@ func (s *Server) HandleClientGetRequest(e echo.Context) (err error) {
 }
 
 // HandleUserCreateUpdateRequest introspect request handling
-func (s *Server) HandleUserCreateRequest(e echo.Context) (error) {
-	token := string(e.QueryParam("token"))
-
-	if token != "" {
-		info, err := s.Manager.LoadAccessToken(token)
-
-		if err != nil {
-			data, status, err := s.tokenError(err)
-			if err != nil {
-				return err
-			}
-			return e.JSON(status, data)
-		}
-
-		data, status, err := s.token(s.GetTokenData(info), http.StatusOK)
-		if err != nil {
-			return err
-		}
-		return e.JSON(status, data)
-	} else {
-		e.Error(errors.NewResponse(errors2.New("Token is required"), http.StatusBadRequest, ""))
-		return nil
+func (s *Server) HandleUserCreateRequest(e echo.Context) error {
+	user := new(models.User)
+	if err := e.Bind(user); err != nil {
+		return err
 	}
+	if err := e.Validate(user); err != nil {
+		return errors.NewResponseByError(err)
+	}
+
+	userSave, err := s.Manager.CreateUser(user, e)
+	if err != nil {
+		return err
+	}
+	return e.JSON(http.StatusCreated, userSave)
 }
 
 // HandleUserCreateUpdateRequest introspect request handling
@@ -623,12 +614,12 @@ func (s *Server) HandleUserGetRequest(e echo.Context) (error) {
 
 // GetErrorData get error response data
 func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCode int) {
-	re := new(errors.Response)
+	re := new(echo.HTTPError)
 
 	if v, ok := errors.Descriptions[err]; ok {
 		re.Internal = err
 		re.Message = v
-		re.StatusCode = errors.StatusCodes[err]
+		re.Code = errors.StatusCodes[err]
 	} else {
 		if fn := s.InternalErrorHandler; fn != nil {
 			if vre := fn(err); vre != nil {
@@ -639,7 +630,7 @@ func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCod
 		if re.Internal == nil {
 			re.Internal = errors.ErrServerError
 			re.Message = errors.Descriptions[errors.ErrServerError]
-			re.StatusCode = errors.StatusCodes[errors.ErrServerError]
+			re.Code = errors.StatusCodes[errors.ErrServerError]
 		}
 	}
 
@@ -647,7 +638,7 @@ func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCod
 		fn(re)
 
 		if re == nil {
-			re = new(errors.Response)
+			re = new(echo.HTTPError)
 		}
 	}
 
@@ -657,7 +648,7 @@ func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCod
 		data["error"] = err.Error()
 	}
 
-	if v := re.StatusCode; v != 0 {
+	if v := re.Code; v != 0 {
 		data["error_code"] = v
 	}
 
@@ -665,12 +656,8 @@ func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCod
 		data["error_description"] = v
 	}
 
-	if v := re.URI; v != "" {
-		data["error_uri"] = v
-	}
-
 	statusCode = http.StatusInternalServerError
-	if v := re.StatusCode; v > 0 {
+	if v := re.Code; v > 0 {
 		statusCode = v
 	}
 
@@ -726,7 +713,8 @@ func (s *Server) MiddlewareAuthClient(next echo.HandlerFunc) echo.HandlerFunc {
 			c.JSON(status, data)
 		}
 
-		c.Set("UserID", ti.GetClientID())
+		c.Set("UserID", ti.GetUserID())
+		c.Set("ClientID", ti.GetClientID())
 		return next(c)
 	}
 }

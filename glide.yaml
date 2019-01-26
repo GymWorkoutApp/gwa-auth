@@ -14,3 +14,5 @@ import:
   - '...'
 - package: github.com/smartystreets/goconvey
   vcs: git
+- package: gopkg.in/go-playground/validator.v9
+  vcs: git

@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/GymWorkoutApp/gwap-auth/errors"
 	"github.com/GymWorkoutApp/gwap-auth/generates"
 	"github.com/GymWorkoutApp/gwap-auth/manager"
 	"github.com/GymWorkoutApp/gwap-auth/server"
 	"github.com/GymWorkoutApp/gwap-auth/store"
+	validator2 "github.com/GymWorkoutApp/gwap-auth/validator"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -28,13 +28,13 @@ func main() {
 
 	srv := server.NewDefaultServer(managerServer)
 
-	srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {
+	srv.SetInternalErrorHandler(func(err error) (re *echo.HTTPError) {
 		log.Println("Internal Error:", err.Error())
-		re = &errors.Response{Internal: err, StatusCode: 500, Message: err.Error()}
+		re = &echo.HTTPError{Internal: err, Code: 500, Message: err.Error()}
 		return
 	})
 
-	srv.SetResponseErrorHandler(func(re *errors.Response) {
+	srv.SetResponseErrorHandler(func(re *echo.HTTPError) {
 		log.Println("Response Error:", re.Internal.Error())
 	})
 
@@ -45,6 +45,7 @@ func main() {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "${time_rfc3339_nano} - [${uri} - ${method}] - ${status} - [${remote_ip}]\n",
 	}))
+	e.Validator = validator2.NewValidator()
 
 	oauth2 := e.Group("oauth2")
 
