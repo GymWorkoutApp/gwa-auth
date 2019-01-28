@@ -1,5 +1,4 @@
 # Build Multstage
-
 # Builder
 FROM golang:alpine as builder
 WORKDIR /go/src/github.com/GymWorkoutApp/gwa_auth

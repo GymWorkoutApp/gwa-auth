@@ -20,16 +20,20 @@ spec:
         - name: gwap-auth-app
           image: gcr.io/gym-app-gd/gwap-auth:latest
           imagePullPolicy: Always
-          ports:
-            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /gwap/auth/
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 3
           readinessProbe:
             httpGet:
-              path: /
+              path: /gwap/auth/
               port: 8080
-            periodSeconds: 1
-            timeoutSeconds: 1
-            successThreshold: 1
-            failureThreshold: 10
+            initialDelaySeconds: 3
+            periodSeconds: 3
+          ports:
+            - containerPort: 8080
           env:
             - name: DB_HOST
               value: 127.0.0.1:5432

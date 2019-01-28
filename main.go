@@ -47,25 +47,28 @@ func main() {
 	}))
 	e.Validator = validator2.NewValidator()
 
-	oauth2 := e.Group("oauth2")
+	gwap := e.Group("/gwap/auth")
+	gwap.GET("/", srv.HandleHealthCheckGetRequest)
+
+	oauth2 := gwap.Group("/oauth2")
 
 	oauth2.GET("/authorize", srv.HandleAuthorizeRequest)
 	oauth2.POST("/token", srv.HandleTokenRequest)
 	oauth2.GET("/introspect", srv.HandleIntrospectRequest)
 
-	auth := e.Group("auth")
-	auth.Use(srv.MiddlewareAuthClient)
-	auth.POST("/users", srv.HandleUserCreateRequest)
-	auth.PUT("/users/:id", srv.HandleUserUpdateRequest)
-	auth.PATCH("/users/:id", srv.HandleUserUpdateRequest)
-	auth.GET("/users", srv.HandleUserGetRequest)
+	v1 := gwap.Group("/v1")
+	v1.Use(srv.MiddlewareAuthClient)
+	v1.POST("/users", srv.HandleUserCreateRequest)
+	v1.PUT("/users/:id", srv.HandleUserUpdateRequest)
+	v1.PATCH("/users/:id", srv.HandleUserUpdateRequest)
+	v1.GET("/users", srv.HandleUserGetRequest)
 
-	auth.POST("/clients", srv.HandleClientCreateRequest)
-	auth.PUT("/clients/:id", srv.HandleClientUpdateRequest)
-	auth.PATCH("/clients/:id", srv.HandleClientUpdateRequest)
-	auth.GET("/clients", srv.HandleClientGetRequest)
-	auth.GET("/clients/:id", srv.HandleClientGetRequest)
+	v1.POST("/clients", srv.HandleClientCreateRequest)
+	v1.PUT("/clients/:id", srv.HandleClientUpdateRequest)
+	v1.PATCH("/clients/:id", srv.HandleClientUpdateRequest)
+	v1.GET("/clients", srv.HandleClientGetRequest)
+	v1.GET("/clients/:id", srv.HandleClientGetRequest)
 
 	e.Logger.SetLevel(echolog.INFO)
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%v", os.Getenv("PORT"))))
+	e.Logger.Fatal(e.Start(fmt.Sprintf("%v:%v", os.Getenv("HOST"), os.Getenv("PORT"))))
 }

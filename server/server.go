@@ -612,6 +612,11 @@ func (s *Server) HandleUserGetRequest(e echo.Context) (error) {
 	return nil
 }
 
+// HandleHealthCheckGetRequest introspect request handling
+func (s *Server) HandleHealthCheckGetRequest(e echo.Context) error {
+	return e.JSON(http.StatusOK, map[string]string{"status": "Healthy"})
+}
+
 // GetErrorData get error response data
 func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCode int) {
 	re := new(echo.HTTPError)
